@@ -1,0 +1,53 @@
+request propose  oppose  protocolRequest  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  oppose  protocolResponse  
+teamName  {{ root }}  
+reputation 100.0
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  protocolRequest  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  oppose refuting  protocolResponse  
+teamName  {{ knight }}  
+reputation 100.0
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  protocolRequest provide mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  oppose strengthening 0.6100000001  protocolResponse provide mmg.MMGInstance {{  0.6914864305554516  }}   
+teamName  {{ root }}  
+reputation 100.0
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  protocolRequest solve mmg.MMGInstance {{ 0.6914864305554516 }} mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  oppose strengthening 0.6100000001  protocolResponse solve mmg.MMGSolution {{  0.45  }}   
+teamName  {{ knight }}  
+reputation 100.0
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  protocolRequest provide mmg.MMGInstanceSet {{  }} scg.protocol.ForAllExistsMax {{  }} 0.6100000001 1.0  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  oppose agree  protocolResponse provide mmg.MMGInstance {{  0.37998233988151753  }}   
+teamName  {{ root }}  
+reputation 99.0
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  protocolRequest provide mmg.MMGInstanceSet {{  }} scg.protocol.ForAllExistsMax {{  }} 0.6100000001 1.0 solve mmg.MMGInstance {{ 0.37998233988151753 }} mmg.MMGInstanceSet {{  }} scg.protocol.ForAllExistsMax {{  }} 0.6100000001 1.0  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  oppose strengthening 0.6100000001  protocolResponse provide mmg.MMGInstance {{  0.8892349947404176  }}  solve mmg.MMGSolution {{  0.45  }}   
+teamName  {{ knight }}  
+reputation 101.0
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  protocolRequest provide mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 solve mmg.MMGInstance {{ 0.8892349947404176 }} mmg.MMGInstanceSet {{  }} scg.protocol.ForAllExistsMax {{  }} 0.6100000001 1.0  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  oppose agree  protocolResponse provide mmg.MMGInstance {{  0.09048437937286247  }}  solve mmg.MMGSolution {{  0.45  }}   
+teamName  {{ root }}  
+reputation 100.0
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  protocolRequest provide mmg.MMGInstanceSet {{  }} scg.protocol.ForAllExistsMax {{  }} 0.6100000001 1.0 solve mmg.MMGInstance {{ 0.09048437937286247 }} mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  oppose refuting  protocolResponse provide mmg.MMGInstance {{  0.8417687309539306  }}  solve mmg.MMGSolution {{  0.45  }}   
+teamName  {{ knight }}  
+reputation 99.9999999999
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  protocolRequest provide mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 provide mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 solve mmg.MMGInstance {{ 0.8417687309539306 }} mmg.MMGInstanceSet {{  }} scg.protocol.ForAllExistsMax {{  }} 0.6100000001 1.0  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  oppose strengthening 0.6100000001  protocolResponse provide mmg.MMGInstance {{  0.8276570503740145  }}  provide mmg.MMGInstance {{  0.6864186968786122  }}  solve mmg.MMGSolution {{  0.45  }}   
+teamName  {{ root }}  
+reputation 100.0000000001
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  protocolRequest solve mmg.MMGInstance {{ 0.8276570503740145 }} mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 solve mmg.MMGInstance {{ 0.6864186968786122 }} mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0  oppose agree  protocolResponse solve mmg.MMGSolution {{  0.45  }}  solve mmg.MMGSolution {{  0.45  }}   
+teamName  {{ knight }}  
+reputation 99.9999999998
+
+  
+ {{ root }}  98.0000000002
+ {{ knight }}  101.9999999998

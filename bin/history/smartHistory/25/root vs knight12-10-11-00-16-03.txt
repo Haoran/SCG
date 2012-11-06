@@ -1,0 +1,141 @@
+claim mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 
+proposer  {{ knight }}  
+opposer  {{ root }}  
+action strengthening 0.6100000001 
+responses provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.38554030138231854  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.9726251869745784  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.2966692544910746  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.043953872963238716  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.3803032596024424  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.24656324855486422  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+  winner  {{ root }}  
+pointsWon 1.0
+
+ claim mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 
+proposer  {{ root }}  
+opposer  {{ knight }}  
+action strengthening 0.6100000001 
+responses provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.38554030138231854  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.9726251869745784  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.2966692544910746  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.043953872963238716  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.3803032596024424  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.24656324855486422  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+  winner  {{ root }}  
+pointsWon 1.0
+
+ claim mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 
+proposer  {{ knight }}  
+opposer  {{ root }}  
+action refuting 
+responses provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.38554030138231854  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.9726251869745784  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.2966692544910746  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.043953872963238716  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.3803032596024424  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.24656324855486422  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+  winner  {{ root }}  
+pointsWon 1.0
+
+ claim mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 
+proposer  {{ root }}  
+opposer  {{ knight }}  
+action agree 
+responses provider  {{ root }}  pr provide mmg.MMGInstance {{  0.9726251869745784  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.2966692544910746  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.043953872963238716  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.3803032596024424  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.24656324855486422  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+  winner  {{ root }}  
+pointsWon 1.0
+
+ claim mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 
+proposer  {{ knight }}  
+opposer  {{ root }}  
+action strengthening 0.6100000001 
+responses provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.2966692544910746  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.043953872963238716  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.3803032596024424  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.24656324855486422  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+  winner  {{ root }}  
+pointsWon 1.0
+
+ claim mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 
+proposer  {{ root }}  
+opposer  {{ knight }}  
+action strengthening 0.6100000001 
+responses provider  {{ root }}  pr provide mmg.MMGInstance {{  0.2966692544910746  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.043953872963238716  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.3803032596024424  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.24656324855486422  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+  winner  {{ root }}  
+pointsWon 1.0
+
+ claim mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 
+proposer  {{ knight }}  
+opposer  {{ root }}  
+action strengthening 0.6100000001 
+responses provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.043953872963238716  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ root }}  pr provide mmg.MMGInstance {{  0.3803032596024424  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.24656324855486422  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+  winner  {{ root }}  
+pointsWon 1.0
+
+ claim mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 
+proposer  {{ root }}  
+opposer  {{ knight }}  
+action agree 
+responses provider  {{ root }}  pr provide mmg.MMGInstance {{  0.3803032596024424  }} 
+ provider  {{ root }}  pr solve mmg.MMGSolution {{  0.45  }} 
+ provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.24656324855486422  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+  winner  {{ root }}  
+pointsWon 1.0
+
+ claim mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 
+proposer  {{ knight }}  
+opposer  {{ root }}  
+action agree 
+responses provider  {{ knight }}  pr provide mmg.MMGInstance {{  0.24656324855486422  }} 
+ provider  {{ knight }}  pr solve mmg.MMGSolution {{  0.45  }} 
+  winner  {{ root }}  
+pointsWon 1.0
+
+  
+ {{ root }}  97.9999999999
+ {{ knight }}  102.0000000001

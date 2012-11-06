@@ -1,0 +1,19 @@
+claim mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsEqual {{      }} 0.61 1.0 
+proposer  {{ root }}  
+opposer  {{ baby }}  
+action agree 
+responses provider  {{ baby }}  pr provide mmg.MMGInstance {{  0.5029537918984814  }} 
+  winner  {{  }}  
+pointsWon 0.0
+
+ claim mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsEqual {{      }} 0.61 1.0 
+proposer  {{ baby }}  
+opposer  {{ root }}  
+action agree 
+responses provider  {{ baby }}  pr provide mmg.MMGInstance {{  0.5029537918984814  }} 
+  winner  {{  }}  
+pointsWon 0.0
+
+  
+ {{ baby }}  98.0
+ {{ root }}  102.0

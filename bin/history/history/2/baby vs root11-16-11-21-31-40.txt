@@ -1,0 +1,9 @@
+request propose  oppose  protocolRequest  
+reply  {{  is kicked out by admin
+Reason: proposing claim with invalid quality }}  
+teamName  {{ baby }}  
+reputation 98.0
+
+  
+ {{ baby }}  98.0
+ {{ root }}  102.0

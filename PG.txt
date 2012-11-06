@@ -1,0 +1,70 @@
+scg_config[
+    domain: mmg.MMGDomain
+    protocols: scg.protocol.ForAllExistsMax 
+    tournamentStyle: full round-robin
+    turnDuration: 60
+    maxNumAvatars: 40
+    minStrengthening: 1.0E-10
+    initialReputation: 100.0
+    maxReputation: 1000.0
+    reputationFactor: 0.4
+    minProposals: 1
+    maxProposals: 1
+    numRounds: 5
+    proposedClaimMustBeNew: false
+    minConfidence: 0.5
+    isPersistentPlayground: true
+    numOfTournamentRounds: 1
+]mmg.MMGConfig {{   mmg_config[ ]   }} playerspec["root" "127.0.0.1" 8025] playerspec["knight" "127.0.0.1" 8026] persistentClaim[mmg.MMGInstanceSet {{        }} scg.protocol.ForAllExistsMax {{        }} 0.61 1.0 root refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{        }} scg.protocol.ForAllExistsMax {{        }} 0.61 1.0 knight refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{        }} scg.protocol.ForAllExistsMax {{        }} 0.61 1.0 root refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{        }} scg.protocol.ForAllExistsMax {{        }} 0.61 1.0 knight refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{        }} scg.protocol.ForAllExistsMax {{        }} 0.61 1.0 root refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 knight refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ refutationEvent[false 99.0]
+ refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 root refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ refutationEvent[false 99.0]
+ refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 knight refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ refutationEvent[false 99.0]
+ refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 root refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ refutationEvent[false 99.0]
+ refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 knight refutationEvent[false 100.0]
+ refutationEvent[false 99.0]
+ refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 root refutationEvent[false 99.0]
+ refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 knight refutationEvent[false 99.0]
+ refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 root refutationEvent[false 100.0]
+ refutationEvent[false 100.0]
+ ]
+ persistentClaim[mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsMax {{      }} 0.61 1.0 knight refutationEvent[false 100.0]
+ ]
+ 

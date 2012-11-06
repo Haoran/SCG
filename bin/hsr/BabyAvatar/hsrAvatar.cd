@@ -1,0 +1,11 @@
+nogen include "../../scg/scg.cd";
+
+package hsr.avatar;
+
+import scg.*;
+import scg.protocol.*;
+import hsr.*;
+import java.util.Random;
+import java.lang.reflect.Method;
+
+HSRAvatar = implements AvatarI.

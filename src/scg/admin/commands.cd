@@ -1,0 +1,12 @@
+nogen include "../../scg/scg.cd";
+
+package scg;
+
+Command = AddTournament | TournamentState | SignUp | ApproveUser | RegisterPlayer.
+AddTournament = "add_tournament" <name> String
+                                 *s <config> Config
+                                 *s <time> int.
+TournamentState = "tournament_state".
+SignUp = "sign_up" <name> String *s <password> String.
+ApproveUser = "approve_user" *s <name> String.
+RegisterPlayer = "register_player" *s <id> int *s <name> String *s <password> String.

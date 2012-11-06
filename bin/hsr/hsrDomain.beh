@@ -1,0 +1,146 @@
+HSRInstance {{ 
+	public boolean valid(SolutionI solution, Config config){
+    	HSRSolution hsrSolution = (HSRSolution) solution;
+    	boolean isValid = lessThanEqualKBranches(hsrSolution, 0) && areNodesValid(hsrSolution) &&  HSRInstance.isBSTUtil(hsrSolution, 0,Math.max(0, this.getN() - 1));
+    	if(isValid)
+    		return true;
+    	else
+    		return false;
+	}
+	
+	private final static boolean isBSTUtil(HSRSolution solution, int min,
+				int max) {
+			if (solution == null) return true;
+			
+			if (solution instanceof Simple) {
+				Simple s = (Simple) solution;
+				return (min == s.getHighest_safe_rung())
+						&& (max == s.getHighest_safe_rung());
+			} else {
+				Compound c = (Compound) solution;
+				int nextQuestion = c.getQuestion();
+				
+				boolean validQuestion = (nextQuestion >= min) && (nextQuestion <= max);
+				boolean validLeft = HSRInstance.isBSTUtil(c.getYes(), min, nextQuestion - 1);
+				boolean validRight = HSRInstance.isBSTUtil(c.getNo(), nextQuestion, max);
+				
+				return (validQuestion && validLeft && validRight);
+			}
+	}
+	
+	private boolean lessThanEqualKBranches(HSRSolution s, int jarsBroken){
+		if(jarsBroken > k) return false;
+    	else{
+    		if(s instanceof Compound){
+    			return lessThanEqualKBranches(((Compound) s).getYes(), jarsBroken +1) &&
+    				lessThanEqualKBranches(((Compound) s).getNo(), jarsBroken);
+    		}else{
+    			return true;
+    		}
+    	}
+    }
+	
+	 private boolean areNodesValid(HSRSolution s){
+		java.util.List<Integer> internalNodes = buildIntList(getN());
+		internalNodes.remove(0);
+		java.util.List<Integer> leaves = buildIntList(getN());
+		return nodesValid(s, internalNodes, leaves) && internalNodes.isEmpty() && leaves.isEmpty();
+	}
+	 
+	 private java.util.List<Integer> buildIntList(int bound){
+    	java.util.List<Integer> intList = new java.util.ArrayList<Integer>();
+    	for(int i=0; i<bound; i++){
+    		intList.add(new Integer(i));
+    	}
+    	return intList;
+    }
+	 
+	 private boolean nodesValid(HSRSolution s, java.util.List<Integer> internalNodes, java.util.List<Integer> leaves){
+    	if(s instanceof Compound){
+    		Integer question = new Integer(((Compound) s).getQuestion());
+    		if(internalNodes.contains(question)){
+    			internalNodes.remove(question);
+    			return nodesValid(((Compound) s).getYes(), internalNodes, leaves) & 
+    					nodesValid(((Compound) s).getNo(), internalNodes, leaves);
+    		}else{
+    			return false;
+    		}
+    	}else{
+    		Integer hsr = new Integer(((Simple) s).getHighest_safe_rung());
+    		if(leaves.contains(hsr)){
+    			leaves.remove(hsr);
+    			return true;
+    		}else{
+    			return false;
+    		}
+    	}
+    }
+	public double quality(SolutionI solution){
+		HSRSolution hsrSolution = (HSRSolution) solution;
+		if(n >0){
+			return (double)hsrSolution.findDepth()/n;
+		}
+		return 0;
+	}
+}}
+
+HSRSolution {{
+	/** Find the depth of the Binary tree **/
+	public int findDepth(){
+		int depth = 0;
+
+		if(this instanceof Compound){
+			depth = Math.max(((Compound)this).getYes().findDepth(), ((Compound)this).getNo().findDepth()) +1;
+		}
+
+		return depth;
+	}
+}}
+
+HSRInstanceSet {{
+        /** Is this a valid/well-formed Instance of the given instance? */
+        public Option<String> belongsTo(InstanceI instance){
+        	HSRInstance i = (HSRInstance)instance;
+        	if(!i.equals(getSingleton())){
+        		return new Some<String>("The instance " + i.print() + " is different from " + getSingleton().print() + ".");
+        	}
+        	return new None<String>();
+        }        
+        
+        /** Is this a valid/well-formed InstanceSet? */
+	    public Option<String> valid(Config config){
+	       HSRInstance i = getSingleton();
+	       int n = i.getN();
+	       int k = i.getK();
+	       
+	       if(n <= 0){
+	    	   return new Some<String>("The Instance set has a n <= 0");
+	       }else if(k<=0){
+	    	   return new Some<String>("The Instance set has a k <= 0");
+	       }
+	       return new None<String>();
+	    }    
+}}
+
+HSRConfig {{
+ 	private static HSRConfig DEFAULT_HSR_CONFIG;
+	static{
+			try{
+			DEFAULT_HSR_CONFIG = HSRConfig.parse( 
+				"hsr_config[\n" +
+				"maxN: 1000\n" +
+				"]"
+			);
+		}catch(Exception ex){
+			ex.printStackTrace();
+		}
+	}
+ 
+	public static HSRConfig getDefaultDomainConfig(){
+		return HSRConfig.DEFAULT_HSR_CONFIG;
+	}
+	
+	public static Config getDefaultConfig(){
+		return new Config(SCGConfig.getDefaultSCGConfig(), getDefaultDomainConfig());
+	}
+}}

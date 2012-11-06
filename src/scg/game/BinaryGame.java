@@ -1,0 +1,807 @@
+package scg.game;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+
+import persistentPG.PersistentClaim;
+import persistentPG.PersistentPlayground;
+import persistentPG.RefutationEvent;
+
+import scg.Agreement;
+import scg.Claim;
+import scg.Config;
+import scg.OpposeAction;
+import scg.ProtocolRequest;
+import scg.ProvideRequest;
+import scg.Refuting;
+import scg.SolveRequest;
+import scg.ProtocolResponse;
+import scg.ProvideResponse;
+import scg.Request;
+import scg.Response;
+import scg.SolveResponse;
+import scg.Strengthening;
+import scg.history.ClaimWithResponse;
+import scg.history.HistoryResponse;
+import scg.history.KickJustification;
+import scg.history.RHEntry;
+import scg.history.RawHistory;
+import scg.history.Reply;
+import scg.history.SmartHistory;
+import scg.logging.Logger;
+import scg.net.PlayerSpec;
+import scg.net.admin.RemotePlayerProxy;
+import scg.protocolInterpreter.AgreementProtocolInterpreter;
+import scg.protocolInterpreter.ProtocolInterpreter;
+import scg.protocolInterpreter.RefutationProtocolInterpreter;
+import scg.protocolInterpreter.StrengtheningProtocolInterpreter;
+import edu.neu.ccs.demeterf.lib.List;
+import edu.neu.ccs.demeterf.lib.Map;
+import edu.neu.ccs.demeterf.lib.Some;
+import edu.neu.ccs.demeterf.lib.ident;
+import edu.neu.ccs.demeterf.lib.verbatim;
+
+public class BinaryGame {
+
+	/**
+	 * @author Astro & BostonChargers
+	 * @param args
+	 * @throws ParseException
+	 */
+	private int tournamentId;
+	private List<Claim> forbiddenClaims;
+	private Logger log = null;
+	private List<Claim> socialWelfareClaims;
+	//private HashMap<Claim, ProtocolInterpreter> listOfRefutationInterpreter;
+	// Added by Madhu, courtesy - Ahmed
+	// This makes sure 2 claims that have the same values for all 4 fields are still
+	// treated as different claims
+	private IdentityHashMap<Claim, ProtocolInterpreter> listOfRefutationInterpreter;
+	//private IdentityHashMap<Claim, AgreementProtocolInterpreter> listOfAgreementInterpreter;
+	private Config config;
+	private RemotePlayerProxy alice, bob;
+	private ActiveGame activeGame;
+	private SmartHistory smartHistory;
+	private RawHistory rawHistory;
+	private HashMap<Claim, Claim> newClaimOriginalClaim; //Map of claim created from original claim and original claim.
+	private String historyFileName;
+	private PersistentPlayground pg;
+	private java.util.List<PersistentClaim> pc = new ArrayList();
+		
+	public BinaryGame(int tournamentId, RemotePlayerProxy alice, RemotePlayerProxy bob,
+			Config config, PersistentPlayground pg) {
+		this.tournamentId = tournamentId;
+		this.alice = alice;
+		this.bob = bob;
+		this.alice.setReputation(100);
+		this.bob.setReputation(100);
+		historyFileName = alice.getName()+" vs " + bob.getName()+ new SimpleDateFormat("MM-dd-yy-HH-mm-ss").format(new Date());
+		// Changed by Madhu - from HashMap to IdentityHashMap
+		listOfRefutationInterpreter = new IdentityHashMap<Claim, ProtocolInterpreter>();
+//		listOfAgreementInterpreter = new IdentityHashMap<Claim, AgreementProtocolInterpreter>();
+		newClaimOriginalClaim = new HashMap<Claim, Claim>();
+		// set opponent for alice
+		alice.setOpponent(bob);
+		// set opponent for bob
+		bob.setOpponent(alice);
+		forbiddenClaims = List.<Claim> create();
+		socialWelfareClaims = List.<Claim> create();
+		this.config = config;
+		activeGame = new ActiveGame(alice.getPlayerStatus(), bob
+				.getPlayerStatus(), 0);
+		smartHistory = new SmartHistory(List.<ClaimWithResponse>create(),new verbatim(alice.getName()), alice.getReputation(), new verbatim(bob.getName()),bob.getReputation());
+		rawHistory = new RawHistory(List.<RHEntry>create(),new verbatim(alice.getName()), alice.getReputation(), new verbatim(bob.getName()),bob.getReputation());
+		try {
+			log = Logger.text(System.out, scg.Util.logFileName("admin"));
+		} catch (IOException ie) {
+			log.error("IOException: " + ie.getMessage());
+		}
+		this.pg=pg;	
+		
+	}
+
+	/**
+	 * Starts the binay games between alice and bob.
+	 */
+	public void start() {
+		int numRounds = config.getScgCfg().getNumRounds();
+		log.notify("Config: " + config);
+
+		// Create 2 player proxies alice and bob
+		log.notify(alice.getName() + " has joined");
+		log.notify(bob.getName() + " has joined");
+		List<RemotePlayerProxy> players = List.<RemotePlayerProxy> create(
+				alice, bob);
+
+		try {
+			// List<ProtocotolRequest> is empty
+			List<ProtocolRequest> iniProtocolRequests = List
+					.<ProtocolRequest> create();
+			Request request = new Request(this.forbiddenClaims, List
+					.<Claim> create(), iniProtocolRequests);
+
+			for (int currentRound = 1; currentRound <= numRounds; currentRound++) {
+				System.out.println("Round#: " + currentRound + " Has Started");
+				System.out.println("Request to " + alice.getName() + ": " + request);
+				log.notify(alice.getName() + " is taking Turn");
+				Response aliceResponse = players.lookup(0).takeTurn(config,
+						request);
+				// check Alice's response
+				if (isInvalidResponse(alice, aliceResponse, request)){
+					Reply reply = new KickJustification(new verbatim(alice.getKickReason()));
+					
+					//Karan/Haoran: Improving smart history readability
+					alice.setReputation(98);
+					bob.setReputation(102);
+					
+					rawHistory.recordRawHistory(request, reply, alice.getName(), alice.getReputation());
+					break;
+				}
+				
+				System.out.println("Response from " + alice.getName() + ": " + aliceResponse);
+				players.lookup(0).clearProtocolRequest();
+				// Commented by Madhu
+				// Append claim to forbidden claims list only when ProposedClaimMustBeNew is
+				// set to true
+				if (config.getScgCfg().getProposedClaimMustBeNew())
+					this.appendForbiddenClaims(aliceResponse);
+
+				addPersistentClaim(alice, aliceResponse);
+				
+				Reply reply = new HistoryResponse(aliceResponse);
+				rawHistory.recordRawHistory(request, reply, alice.getName(), alice.getReputation());
+				
+				// Convert aliceResponse to the request which will be sent to
+				// bob
+				request = this.convert(aliceResponse, bob, request, config
+						.getScgCfg().getMinStrengthening());
+				
+				System.out.println("Request to " + bob.getName() + ": " +  request);
+				log.notify(bob.getName() + " is taking Turn");
+				Response bobResponse = null;
+				try{
+				bobResponse = players.lookup(1).takeTurn(config,
+						request);
+				} catch(Exception e) {
+					setKickReason(bob, " is kicked out by admin\n"
+							+ "Reason: avatar takes too long to handle valid request");
+					log.notify(e.getMessage());
+					reply = new KickJustification(new verbatim(bob.getKickReason()));
+					rawHistory.recordRawHistory(request, reply, bob.getName(), bob.getReputation());
+					break;
+				}
+				// check Bob's response
+				if (isInvalidResponse(bob, bobResponse, request)){
+					reply = new KickJustification(new verbatim(bob.getKickReason()));
+					
+					//Karan/Haoran: Improving smart history readability
+					alice.setReputation(102);
+					bob.setReputation(98);
+					
+					rawHistory.recordRawHistory(request, reply, bob.getName(), bob.getReputation());
+					break;
+				}
+				System.out.println("Response from " + bob.getName() + ": " +  bobResponse);
+				players.lookup(1).clearProtocolRequest();
+				// Commented by Madhu
+				// Append claim to forbidden claims list only when ProposedClaimMustBeNew is
+				// set to true
+				if (config.getScgCfg().getProposedClaimMustBeNew())
+					this.appendForbiddenClaims(bobResponse);
+
+				addPersistentClaim(bob, bobResponse);
+				// add claim to PG only when bob is not agree with the claim need change
+
+				
+				reply = new HistoryResponse(bobResponse);
+				rawHistory.recordRawHistory(request, reply, bob.getName(), bob.getReputation());
+				
+				// Convert bobResponse to request which will be sent to alice in
+				// next round
+				request = this.convert(bobResponse, alice, request, config
+						.getScgCfg().getMinStrengthening());
+				
+				System.out.println("Round#: " + currentRound + " Is Over");
+				activeGame.setRound(currentRound);
+				alice.updatePlayerStatus();
+				bob.updatePlayerStatus();
+				// check both avatars' reputation
+				if (isInvalidReputation(alice)) break;
+				if (isInvalidReputation(bob)) break;
+				System.out.println(alice.getName() + "'s reputation: "
+						+ alice.getReputation());
+				System.out.println(bob.getName() + "'s reputation: "
+						+ bob.getReputation());
+				activeGame.setPlayerStatus(alice.getPlayerStatus(), bob
+						.getPlayerStatus());
+			}
+
+			System.out.println("Alice Reputation: " + alice.getReputation());
+			System.out.println("Bob Reputation: " + bob.getReputation());
+			rawHistory.setPlayer1Score(alice.getReputation());
+			rawHistory.setPlayer2Score(bob.getReputation());
+			smartHistory.setPlayer1Score(alice.getReputation());
+			smartHistory.setPlayer2Score(bob.getReputation());
+			
+			log.notify("Turn completed");
+			log.notify("All " + numRounds + " rounds completed");
+			players.lookup(0).clearProtocolRequest();
+			players.lookup(1).clearProtocolRequest();
+			
+			rawHistory.generateRawHistoryFile(alice, bob,""+tournamentId, historyFileName);
+			smartHistory.generateSmartHistoryFile(alice, bob,""+tournamentId, historyFileName);
+			
+			updatePlayerScores();
+			
+			updatePersistentPlaygroundToFile();
+			
+		} catch (Exception e) {
+			System.out.println("Error: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+
+	private void updatePersistentPlaygroundToFile() {
+		if(pg != null){
+		java.util.List<PersistentClaim> persistentClaim = new ArrayList();
+		for(int i =0; i< pg.getNumberofPersistentClaims();i++){
+			if(checkHasRefutationEvent(pg.getPersistentClaim(i)))
+				persistentClaim.add(pg.getPersistentClaim(i));
+		}
+			List<PlayerSpec> enrolledPlayers = pg.getEnrolledPlayers();
+		for(int j=0; j<pc.size();j++){
+			if(pc.get(j).getRefutationEvents().length()!=0)
+				persistentClaim.add(pc.get(j));
+		}
+		Config c = pg.getConfig();
+		List<PersistentClaim> temp = List.<PersistentClaim> create(persistentClaim);
+		PersistentPlayground p = new PersistentPlayground(c,enrolledPlayers,temp);
+		savePersistentPlayground(p);
+		}
+	}
+
+	private boolean checkHasRefutationEvent(PersistentClaim pc){
+		return pc.getRefutationLength()!=0;
+	}
+	/**
+	 * Returns historyFileName for the BinaryGameObject.
+	 * @return
+	 */
+	public String getHistoryFileName() {
+		return historyFileName;
+	}
+	
+	/**
+	 * Updates the player scores by checking their reputation at the end of the game
+	 */
+	private void updatePlayerScores() {
+		if(alice.getReputation() > bob.getReputation()) {
+			if(alice.wasKicked()) bob.updatePlayerScore();
+			else alice.updatePlayerScore();
+		} else if(bob.getReputation() > alice.getReputation()) {
+			if(bob.wasKicked()) alice.updatePlayerScore();
+			else bob.updatePlayerScore();
+		} else if(bob.getReputation() == alice.getReputation()) {
+			if(bob.wasKicked()) alice.updatePlayerScore();
+			else if(alice.wasKicked()) bob.updatePlayerScore();
+			else {
+				alice.updatePlayerScore();
+				bob.updatePlayerScore();
+			}
+		}
+	}
+	
+	/**
+	 * Sets the kickReason for the player
+	 */
+	private void setKickReason(RemotePlayerProxy rpp, String kickReason) {
+		rpp.setKickReason(kickReason);
+		rpp.setKicked(true);
+		log.notify(rpp.getName() + kickReason);
+	}
+	
+	/**
+	 * Checks the response validity for the passed request.
+	 */
+	private boolean isInvalidResponse(RemotePlayerProxy rpp, Response response,
+			Request request) {
+		
+		// check if the current player belongs to the domain
+		if (isInvalidDomain(rpp, response)){
+			return true;
+		} else {
+		
+		// check if the proposed claims are new when
+		// getProposedClaimMustBeNew is set to true in config
+		if (config.getScgCfg().getProposedClaimMustBeNew()){
+			// Added by Madhu
+			// Since forbidden claims can be empty when ProposedClaimMustBeNew is set to false
+			// it is necessary to check if the list is empty before using it in an if condition
+			if(!forbiddenClaims.isEmpty())
+				if (forbiddenClaims.containsAny(response.getProposed())) {
+					setKickReason(rpp, " is kicked out by admin\n"
+						+ "Reason: proposing forbidden claims");
+					return true;
+			}
+		}
+
+		// check if the number of proposals are valid
+		int minProposals = config.getScgCfg().getMinProposals();
+		int maxProposals = config.getScgCfg().getMaxProposals();
+		if (response.getProposed().length() < minProposals
+				|| response.getProposed().length() > maxProposals) {
+			setKickReason(rpp, " is kicked out by admin\n"
+					+ "Reason: proposing invalid number of claims");
+			return true;
+		}
+
+		// check if the instanceSet in the proposed claim is well-formed 
+		// need to add the methond Option<String> valid() in InstanceSetI at scg.beh 
+		for (int i = 0; i < response.getProposed().length(); i++){
+			if (response.getProposed().lookup(i).getInstanceSet().valid(config) instanceof Some<?>) {
+				setKickReason(rpp, " is kicked out by admin\n"
+								+ "Reason: proposing claims containing invalid instance set");
+				return true;
+			}
+		}
+		
+		// check if the claim's quality and confidence are valid
+		for (int i = 0; i < response.getProposed().length(); i++) {
+			if (response.getProposed().lookup(i).getQuality() > 1
+					|| response.getProposed().lookup(i).getQuality() < 0) {
+				setKickReason(rpp, " is kicked out by admin\n"
+						+ "Reason: proposing claim with invalid quality");
+				return true;
+			} else if (response.getProposed().lookup(i).getConfidence() > 1
+					|| response.getProposed().lookup(i).getConfidence() < config
+							.getScgCfg().getMinConfidence()) {
+				setKickReason(rpp, " is kicked out by admin\n"
+						+ "Reason: proposing claim with invalid confidence");
+				return true;
+			}
+		}
+
+		// check the number of oppose actions
+		if (response.getOppositions().length() != request.getClaimsToOppose()
+				.length()) {
+			setKickReason(rpp, " is kicked out by admin\n"
+					+ "Reason: invalid number of oppose actions");
+			return true;
+		}
+
+		// check the ProtocolResponse
+		// the number of protocolResponses must be equal to protocolRequests
+		// the number of provideResponses must be equal to provideRequests
+		// the number of solveResponses must be equal to sovleRequests
+		// instances provided must be the same as provide request
+		// solution must solve the request instance
+		// solution must be valid
+		// ?should the response and request be the same order
+		return isInvalidProtocolResponse(rpp, request.getProtocolRequests(),
+				response.getProtocolResponses());
+		}
+	}
+	
+	// check if the current player belongs to the domain
+	private boolean isInvalidDomain(RemotePlayerProxy rpp, Response response){
+		// Get the server's Domain ID from the domainConfigWrapper
+		String domainConfigWrapper = config.getDomainConfigWrapper().toString();
+		int endIndexConfig = domainConfigWrapper.indexOf(".");
+		String serverDomainID = domainConfigWrapper.substring(0, endIndexConfig);
+		
+		// Added by Madhu - check if the number of proposals is 0. If so, kick the avatar out.
+		if(response.getProposed().isEmpty())
+		{
+			setKickReason(rpp, " is kicked out by admin\n"
+					+ "Reason: No proposals have been made");
+			return true;
+		}
+		else
+		{	
+			// Get the player's Domain ID from instanceSetWrapper
+			String insWrapper = response.getProposed().lookup(0).getInstanceSetWrapper().toString();
+			int endIndexClaim = insWrapper.indexOf(".");		
+			String playerDomainID = insWrapper.substring(0, endIndexClaim);
+
+			if (serverDomainID.equals(playerDomainID)){
+			return false;
+		} else{
+			setKickReason(rpp, " is kicked out by admin\n"
+					+ "Reason: Not belongs to current game domain");
+			return true;
+		} 
+		}
+	}
+
+	// check whether the  ProtocolResponse is valid or not
+	private boolean isInvalidProtocolResponse(RemotePlayerProxy rpp,
+			List<ProtocolRequest> protocolRequests,
+			List<ProtocolResponse> protocolResponses) {
+		if (protocolResponses.length() != protocolRequests.length()) {
+			setKickReason(rpp,  " is kicked out by admin\n"
+					+ "Reason: invalid number of protocol responses. Number of your responses " +
+					protocolResponses.length() + "Number of responses expected: " + protocolRequests.length());
+			return true;
+		} else {
+			int numToProvide = getNumRequest(protocolRequests).lookup(0);
+			int numProvided = getNumResponse(protocolResponses).lookup(0);
+			int numToSolve = getNumRequest(protocolRequests).lookup(1);
+			int numSolved = getNumResponse(protocolResponses).lookup(1);
+			if (numProvided != numToProvide) {
+				setKickReason(rpp,  " is kicked out by admin\n"
+						+ "Reason: invalid number of instances provided");
+				return true;
+			} else if (numSolved != numToSolve) {
+				setKickReason(rpp,  " is kicked out by admin\n"
+						+ "Reason: invalid number of solutions");
+				return true;
+
+			} // provided instance must be in provide request
+			// solution must be valid (instance.valide(solution))
+			else
+				return isInvalidInstanceOrSolution(protocolRequests,
+						protocolResponses, rpp);
+		}
+	}
+
+	// get the number of provide requests and solve requests
+	private List<Integer> getNumRequest(List<ProtocolRequest> protocolRequests) {
+		int numToProvide = 0;
+		int numToSolve = 0;
+		for (int i = 0; i < protocolRequests.length(); i++) {
+			if (protocolRequests.lookup(i) instanceof ProvideRequest) {
+				numToProvide += 1;
+			} else if (protocolRequests.lookup(i) instanceof SolveRequest) {
+				numToSolve += 1;
+			}
+		}
+		return List.<Integer> create(numToProvide, numToSolve);
+	}
+
+	// get the number of provide response and solve response
+	private List<Integer> getNumResponse(
+			List<ProtocolResponse> protocolResponses) {
+		int numProvided = 0;
+		int numSolved = 0;
+		for (int i = 0; i < protocolResponses.length(); i++) {
+			if (protocolResponses.lookup(i) instanceof ProvideResponse) {
+				numProvided += 1;
+			} else if (protocolResponses.lookup(i) instanceof SolveResponse) {
+				numSolved += 1;
+			}
+		}
+		return List.<Integer> create(numProvided, numSolved);
+	}
+
+	// check if the instance or solution is invalid
+	private boolean isInvalidInstanceOrSolution(
+			List<ProtocolRequest> protocolRequests,
+			List<ProtocolResponse> protocolResponses, RemotePlayerProxy rpp) {
+		for (int i = 0; i < protocolResponses.length(); i++) {
+			if (protocolResponses.lookup(i) instanceof ProvideResponse) {
+				ProvideResponse provideResponse = (ProvideResponse) protocolResponses
+						.lookup(i);
+				ProvideRequest provideRequest = (ProvideRequest) protocolRequests
+						.lookup(i);
+				if (provideRequest.getClaimToBeProvided().getInstanceSet()
+						.belongsTo(provideResponse.getInstance()) instanceof Some<?>) {
+					setKickReason(rpp,  " is kicked out by admin\n"
+							+ "Reason: provide invalid instance");
+					return true;
+				}
+			} else {
+				SolveResponse solveResponse = (SolveResponse) protocolResponses
+						.lookup(i);
+				SolveRequest solveRequest = (SolveRequest) protocolRequests
+						.lookup(i);
+				if (!(solveRequest.getInstance().valid(
+						solveResponse.getSolution(), config))) {
+					setKickReason(rpp,  "is kicked out by admin\n"
+							+ "Reason: invalid solution");
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	private boolean isInvalidReputation(RemotePlayerProxy rpp){
+		double iniR = config.getScgCfg().getInitialReputation();
+		double maxR = config.getScgCfg().getMaxReputation();
+		// the minimum reputation for an avatar when its opponent gets the maxR
+		double minR = 2*iniR - maxR; 
+		if (rpp.getReputation() < minR){
+			setKickReason(rpp,  " is kicked out by admin\n"
+					+ "Reason: reputation is lower than minimum reputation");
+			return true;
+		} else if (rpp.getReputation() > maxR){
+			setKickReason(rpp, " is kicked out by admin\n"
+					+ "Reason: reputation is greater than maximum reputation");
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	// Convert the given input response to a request
+	public Request convert(Response response, RemotePlayerProxy avatar,
+			Request request, double minStrengthening) {
+		Iterator<OpposeAction> opposeActionIterator = response.getOppositions()
+				.iterator();
+		System.out.println("total opposeAction is"+response.getOppositions().length());
+		// Iterate through all the claims To Oppose in request and check their
+		// actions in the response
+		createProtocolInterpreter(request, opposeActionIterator, avatar);
+		protocolResponseHandler(response, request, avatar);
+		// Go through the list of AgreementInterpreters and check if agreement
+		// interpreter is complete
+//		for (Iterator<Claim> it = listOfAgreementInterpreter.keySet()
+//				.iterator(); it.hasNext();) {
+//			Claim claim = it.next();
+//			AgreementProtocolInterpreter apt = listOfAgreementInterpreter
+//					.get(claim);
+//			// if agreement protocol has executed all the steps and is complete
+//			if (apt.areAllStepsExecuted()) {
+//				// Check result of all the refutation protocol interpreters
+//				// in agreement interpreter
+//				if (apt.checkResult()) {
+//					socialWelfareClaims = socialWelfareClaims.append(claim);
+//					if(!(listOfRefutationInterpreter.isEmpty()))
+//						listOfRefutationInterpreter.remove(claim);
+//				}
+//			} else if (apt.isComplete()) {
+//				listOfRefutationInterpreter = apt
+//						.createRpi(listOfRefutationInterpreter, newClaimOriginalClaim);
+//			}
+//		}
+		return new Request(forbiddenClaims, response.getProposed(), avatar
+				.getProtocolRequests());
+	}
+	
+	// Iterate through all the claims To Oppose in request and check their
+	// actions in the response
+	private void createProtocolInterpreter (Request request,
+			Iterator<OpposeAction> opposeActionIterator,
+			RemotePlayerProxy avatar) {
+		for (Iterator<Claim> it = request.getClaimsToOppose().iterator(); it
+				.hasNext();) {
+			Claim opposeClaim = it.next();
+			OpposeAction opposeAction = opposeActionIterator.next();
+			smartHistory.createClaimWithResponse(newClaimOriginalClaim, avatar, opposeClaim, opposeAction);
+			if (opposeAction instanceof Refuting) {
+				createRefutationProtocolInterpreter(avatar, false, opposeClaim);
+			} else if (opposeAction instanceof Strengthening) {
+				Strengthening opposedClaim = (Strengthening) opposeAction;
+				// Create a new claim with the strengthened quality
+				Claim strengthenedClaim = new Claim(opposeClaim
+						.getInstanceSet(), opposeClaim.getProtocol(),
+						opposedClaim.getNewQuality(), opposeClaim
+								.getConfidence());
+				createStrengthenedProtocolInterpreter(avatar,
+						strengthenedClaim, opposeClaim);
+				newClaimOriginalClaim.put(strengthenedClaim, opposeClaim);
+			} else if (opposeAction instanceof Agreement) {
+				createRefutationProtocolInterpreter(avatar.getOpponent(), true, opposeClaim);
+	        	newClaimOriginalClaim.remove(opposeClaim);
+				// change the AgreementProtocolInterpreter by following the new
+				// agreement rule
+				//createAgreementProtocolInterpreter(avatar, opposeClaim);
+			}
+		}
+	}
+	
+	/**
+	 * Updates the admin objects as per the response received from player.
+	 * @param response : Response to be used to update the admin
+	 * @param request : Request sent for this response
+	 * @param avatar : Player to whom the next request will be sent.
+	 */
+	private void protocolResponseHandler(Response response, Request request, RemotePlayerProxy avatar) {
+		int counter = 0;
+		for (Iterator<ProtocolResponse> protocolResponseIterator = response
+				.getProtocolResponses().iterator(); protocolResponseIterator
+				.hasNext();) {
+			ProtocolResponse pr = protocolResponseIterator.next();
+			
+			if (pr instanceof ProvideResponse) {
+				ProvideResponse provideResponse = (ProvideResponse) pr;
+				// Get the corresponding protocol Request for the current
+				// provideResponse
+				ProvideRequest provideRequest = (ProvideRequest) request
+						.getProtocolRequests().lookup(counter);
+				System.out.println("Inside provide response");
+				ProtocolInterpreter pit = listOfRefutationInterpreter
+						.get(provideRequest.getClaimToBeProvided());
+				System.out.println("protocol interpreter step complete");
+				pit.setInstance(provideResponse.getInstance());
+				System.out.println("Instance set");
+				
+				smartHistory.updateClaimWithResponse(newClaimOriginalClaim, provideRequest.getClaimToBeProvided(), pr, avatar);
+				System.out.println("Smart history updated");
+				checkForCompletion(pit, provideRequest.getClaimToBeProvided(),avatar);
+			} else if (pr instanceof SolveResponse) {
+				SolveResponse solveResponse = (SolveResponse) pr;
+				// Get the corresponding protocol Request for the current
+				// solveResponse
+				SolveRequest solveRequest = (SolveRequest) request
+						.getProtocolRequests().lookup(counter);
+
+				// Get the claim for the instance in the solve request from the
+				// claimAndInstance
+				//Claim claim = claimAndInstance.get(solveRequest.getInstance());
+				Claim claim = solveRequest.getClaim().inner();
+				System.out.println("inside solve response");
+				ProtocolInterpreter pit = listOfRefutationInterpreter
+						.get(claim);
+				System.out.println("protocol interpreter step complete");
+				pit.setSolution(solveResponse.getSolution());
+				System.out.println("solution set");
+				smartHistory.updateClaimWithResponse(newClaimOriginalClaim, claim, pr, avatar);
+				System.out.println("Smart history updated");
+				// Remove the claim from forbidden claims list as this claim has
+				// been solved
+// Commented by gautam: Get claims directly from solveRequest, as there might 
+// claims with same instances, but different quality and confidence.
+// Moved this.forbiddenClaims.remove inside checkForCompletion.
+				//this.forbiddenClaims.remove(claimAndInstance.get(solveRequest.getInstance()));
+				//checkForCompletion(pit, claimAndInstance.get(solveRequest.getInstance()));
+				
+				checkForCompletion(pit, claim, avatar);
+			}
+			counter++;
+		}
+	}
+		
+	// Creates a Refutation Protocol Interpreter for the input avatar with the
+	// input claim
+	private void createRefutationProtocolInterpreter(RemotePlayerProxy avatar, boolean updateReputationsOnlyWhenBobWins,
+			Claim claim) {
+		RefutationProtocolInterpreter refutationInterpreter = new RefutationProtocolInterpreter(
+				avatar, updateReputationsOnlyWhenBobWins, avatar.getOpponent(), claim);
+		System.out.println("going to createRefutationProtocolInterpreter proceed");
+		refutationInterpreter.proceed();
+		System.out.println("successfully proceed!");
+		listOfRefutationInterpreter.put(claim, refutationInterpreter);
+		
+		if(!updateReputationsOnlyWhenBobWins){
+			//update the RefutationEvent of the persistentClaim
+			boolean successful = (refutationInterpreter.getWinner() == avatar.getName());
+			RefutationEvent re = new RefutationEvent(successful, avatar.getReputation());
+			if(config.getScgCfg().getIsPersistentPlayground() && pg.checkPlayground(config)){	
+				System.out.println("in createRefutationProtocolInterpreter");
+				//pg.updatePersistentClaim(claim, avatar.getOpponent().getName(), re);
+				System.out.println("how many pc we got:"+this.pg.getPersistentClaims().length());
+				updatePersistentClaim(claim, re);
+			}
+			System.out.println("finish updated in createRefutationProtocolInterpreter");
+		}
+	}
+
+//	// Creates a Agreement Protocol Interpreter based on the new rule for
+//	// agreement
+//	private void createAgreementProtocolInterpreter(RemotePlayerProxy avatar,
+//			Claim claim) {
+//		AgreementProtocolInterpreter agreementInterpreter = new AgreementProtocolInterpreter(
+//				avatar, avatar.getOpponent(), claim);
+//		agreementInterpreter.createRpi(listOfRefutationInterpreter, newClaimOriginalClaim);
+//		listOfAgreementInterpreter.put(claim, agreementInterpreter);
+//	}
+
+	// Creates a Strengthened Protocol Interpreter for the input avatar with the
+	// input claim
+	private void createStrengthenedProtocolInterpreter(
+			RemotePlayerProxy avatar, Claim newClaim, Claim originalClaim) {
+//		StrengtheningProtocolInterpreter strengthenedProtocolInterpreter = new StrengtheningProtocolInterpreter(
+//				avatar, avatar.getOpponent(), newClaim, originalClaim);
+		StrengtheningProtocolInterpreter strengthenedProtocolInterpreter = new StrengtheningProtocolInterpreter(
+		avatar.getOpponent(), avatar, newClaim, originalClaim);
+		strengthenedProtocolInterpreter.proceed();
+		listOfRefutationInterpreter.put(newClaim,
+				strengthenedProtocolInterpreter);
+	}
+
+	// Appends the proposed claims in response to the forbidden claims list
+	private void appendForbiddenClaims(Response response) {
+		this.forbiddenClaims = this.forbiddenClaims.append(response.getProposed());
+	}
+
+	// if protocol interpreter is complete then remove the interpreter from the
+	// list
+	private void checkForCompletion(ProtocolInterpreter pit, Claim claim , RemotePlayerProxy avatar) {
+		if (pit.isComplete()){
+			// Added by Madhu
+			// Since forbidden claim list can be empty if no claim is appended
+			// this condition needs to be checked to make sure the list is not empty
+			// If it is not checked, it throws a Null Pointer Exception.
+			if(!(forbiddenClaims.isEmpty()))
+				this.forbiddenClaims.remove(claim);
+			if(!(listOfRefutationInterpreter.isEmpty()))
+				listOfRefutationInterpreter.remove(claim);
+		}else{
+			pit.proceed();
+			if(!(pit.getWinner().equals(""))){
+				smartHistory.endClaimWithResponse(newClaimOriginalClaim, claim, pit.getWinner(), pit.getPointsWon());
+				System.out.println(pit.getWinner() + " " + pit.getPointsWon());
+			}
+			else
+			{
+				System.out.println("In else condition" + pit.getWinner() + " " + pit.getPointsWon());
+			}
+		}
+	}
+
+	public ActiveGame getActiveGame() {
+		return this.activeGame;
+	}
+	
+	
+	private void savePersistentPlayground(PersistentPlayground p){
+		
+		try{
+			String domain = config.getScgCfg().getDomain().toString();
+			String persistentPlaygroundFileName = domain +"PersistentPlayground.txt";
+			File persistentPlaygroundFile = new File(persistentPlaygroundFileName);
+			
+			FileWriter writer = new FileWriter(persistentPlaygroundFile);
+			writer.write(p.toString());
+			writer.flush();
+			System.out.print("saving persistentPlayground information");
+			writer.close();
+		} catch(Exception e) {
+			System.out.println("Error: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	
+	private void updatePersistentClaim(Claim c, RefutationEvent event){
+		java.util.List<PersistentClaim> temp = new ArrayList();
+		for(int i= 0; i<pc.size();i++)
+		{
+			if(checkSameClaim(getIndexClaim(i).getClaimQuality(), c.getQuality()))
+			{
+				java.util.List<RefutationEvent> refutationEvents = new ArrayList();
+				for(int j = 0; j < getIndexClaim(i).getRefutationLength(); j ++){
+					refutationEvents.add(getIndexClaim(i).getIndexRefutationEvent(j));
+				}
+				refutationEvents.add(event);
+				List<RefutationEvent> tempRE = List.<RefutationEvent> create(refutationEvents);
+				PersistentClaim tempPC = new PersistentClaim(getIndexClaim(i).getClaim(),getIndexClaim(i).getPlayerID(), tempRE);
+				temp.add(tempPC);
+				//this.pc.get(i).getRefutationEvents().append(event);
+			}else{
+				temp.add(pc.get(i));
+			}
+		}
+		pc = temp;
+	}
+	
+	private PersistentClaim getIndexClaim(int i){
+		return pc.get(i);
+	}
+	
+	private static boolean checkSameClaim(double qualityA, double qualityB){
+		boolean checker = (qualityA == qualityB);
+		return checker;
+	}
+	
+	private void addPersistentClaim(RemotePlayerProxy avatar,Response re){
+		if(pg != null){	
+			for(int i =0; i<re.getProposed().length();i++){ 
+				this.pc.add(new PersistentClaim(re.getProposed().lookup(i), 
+						new ident(avatar.getName()), List.<RefutationEvent>create()));
+			}
+		}
+	}
+
+}

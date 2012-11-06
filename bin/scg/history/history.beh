@@ -1,0 +1,133 @@
+
+RawHistory{{
+	/**
+	 * To record the raw history event in RawHistory Object
+	 * @param request : Request sent to the player for this response
+	 * @param reply : Response from the player
+	 * @param teamName : Player name
+	 * @param reputation : reputation of the player
+	 */
+	public void recordRawHistory(Request request, Reply reply, String teamName, Double reputation ){
+		RHEntry entry = new RHEntry(request, reply,new verbatim(teamName), reputation);
+		//List<RHEntry> entries = rawHistory.getEntries();
+		entries = entries.append(entry);
+		//rawHistory.setEntries(entries);
+	}
+	
+	/**
+	 * Generates raw history file for the RawHistory object populated by start method above.
+	 * @param fileName : Name of the raw history file
+	 * @throws IOException : If file could not be created.
+	 */
+	public void generateRawHistoryFile(RemotePlayerProxy alice, RemotePlayerProxy bob, String tournamentId, String fileName) throws IOException{
+		try {			
+	        Util.createFolder("", Constants.HISTORY_FILE_PREFIX);
+	        Util.createFolder(Constants.HISTORY_FILE_PREFIX, Constants.RAW_HISTORY_FOLDER);
+	        Util.createFolder(Constants.HISTORY_FILE_PREFIX+"/"+Constants.RAW_HISTORY_FOLDER, tournamentId);
+	        
+			String historyFileName = Constants.HISTORY_FILE_PREFIX+"/"+Constants.RAW_HISTORY_FOLDER+
+				"/"+tournamentId+"/"+fileName + Constants.HISTORY_FILE_SUFFIX;
+			File rawHistoryFile = new File(historyFileName);
+			
+			FileWriter writer = new FileWriter(rawHistoryFile);
+			writer.write(this.toString());
+			writer.flush();
+			//writer.write(alice.getName() + " : " + alice.getReputation() + "\n");
+			//writer.write(bob.getName() + " : " + bob.getReputation());
+			//writer.flush();
+		    writer.close();
+		} catch(Exception e) {
+			System.out.println("Error: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+}}
+
+
+
+SmartHistory{{
+	/**
+	 * To creates a ClaimWithResponse object for a new claim opposed.
+	 * @param avatar : avatar who opposed the claim
+	 * @param claim : Claim opposed
+	 * @param opposeAction : action taken by avatar
+	 */
+	public void createClaimWithResponse(java.util.HashMap<Claim,Claim> newClaimOriginalClaim, RemotePlayerProxy avatar, Claim claim, OpposeAction opposeAction){
+		ClaimWithResponse claimWithResponse = new ClaimWithResponse(claim, new verbatim(avatar.getName()), 
+				new verbatim(avatar.getOpponent().getName()), opposeAction, List.<AnnotatedResponse>create(), new verbatim(""), 0.0);
+		//List<ClaimWithResponse> loc = getLoc();
+		loc = loc.append(claimWithResponse);
+		newClaimOriginalClaim.put(claim, claim);
+		//smartHistory.setLoc(loc);
+	}
+
+	/**
+	 * Updates the ClaimWithResponse object for previously opposed claim
+	 * @param claim : claim for which the ClaimWithResponse object is to be updated
+	 * @param response : response that is to be added in the ClaimWithResponse object
+	 * @param avatar : avatar whose opponent sent the response.
+	 */
+	public void updateClaimWithResponse(java.util.HashMap<Claim,Claim> newClaimOriginalClaim, Claim claim, ProtocolResponse response, RemotePlayerProxy avatar){
+		if (newClaimOriginalClaim.containsKey(claim)){
+			claim.getInstanceSet().toString();
+			Claim originalClaim = newClaimOriginalClaim.get(claim);
+			for(ClaimWithResponse claimWithResponse : loc){
+				if(claimWithResponse.getClaim().equals(originalClaim)){
+					AnnotatedResponse aResponse = new AnnotatedResponse(new verbatim(avatar.getOpponent().getName()), response);
+					List<AnnotatedResponse> responses = claimWithResponse.getResponses();
+					responses = responses.append(aResponse);
+					claimWithResponse.setResponses(responses);
+				}
+			}
+		}else{
+			System.out.println("debug");
+		}
+	}
+	
+	/**
+	 * Called once the protocol for the particular claim is complete.
+	 * @param claim : Claim whose ClaimWithResponse object is complete.
+	 * @param winner : teamName that won the claim
+	 * @param pointsWon : points won in the claim
+	 */
+	public void endClaimWithResponse(java.util.HashMap<Claim,Claim> newClaimOriginalClaim, Claim claim, String winner, double pointsWon){
+		if (newClaimOriginalClaim.containsKey(claim)){
+			Claim originalClaim = newClaimOriginalClaim.get(claim);
+			for(ClaimWithResponse claimWithResponse : loc){
+				if(claimWithResponse.getClaim().equals(originalClaim)){
+					claimWithResponse.setWinner(new verbatim(winner));
+					claimWithResponse.setPointsWon(pointsWon);
+				}
+			}
+			//newClaimOriginalClaim.remove(claim);
+		}
+	}
+
+	/**
+	 * Generates smart history file for the SmartHistory object populated by start method above.
+	 * @param fileName : Name of the smart history file
+	 * @throws IOException : If file could not be created.
+	 */
+	public void generateSmartHistoryFile(RemotePlayerProxy alice, RemotePlayerProxy bob, String tournamentId, String fileName) throws IOException{
+		try {
+			Util.createFolder("", Constants.HISTORY_FILE_PREFIX);
+	        Util.createFolder(Constants.HISTORY_FILE_PREFIX, Constants.SMART_HISTORY_FOLDER);
+	        Util.createFolder(Constants.HISTORY_FILE_PREFIX+"/"+Constants.SMART_HISTORY_FOLDER, tournamentId);
+	        
+			String historyFileName = Constants.HISTORY_FILE_PREFIX+"/"+Constants.SMART_HISTORY_FOLDER+
+				"/"+tournamentId+"/"+fileName + Constants.HISTORY_FILE_SUFFIX;
+			File smartHistoryFile = new File(historyFileName);
+			FileWriter writer = new FileWriter(smartHistoryFile);
+			writer.write(this.toString());
+			writer.flush();
+			//writer.write(alice.getName() + " : " + alice.getReputation() + "\n");
+			//writer.write(bob.getName() + " : " + bob.getReputation());
+			//writer.flush();
+	        writer.close();
+		} catch(Exception e) {
+			System.out.println("Error: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+}}

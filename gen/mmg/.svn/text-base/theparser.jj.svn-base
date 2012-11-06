@@ -1,0 +1,744 @@
+
+// ** This file was generated with DemFGen (vers:4/15/2011)
+
+options{ STATIC = false;  }
+PARSER_BEGIN(TheParser)
+package mmg;
+
+import edu.neu.ccs.demeterf.lib.*;
+import edu.neu.ccs.demeterf.lib.*;
+import edu.neu.ccs.demeterf.lib.*;
+import edu.neu.ccs.demeterf.lib.*;
+import scg.*;
+import edu.neu.ccs.demeterf.Fields;
+import edu.neu.ccs.demeterf.lib.ident;
+import edu.neu.ccs.demeterf.lib.verbatim;
+
+  public class TheParser{
+
+   public static String unescape(String str){
+      String retval = "";
+      int index = 0;
+      char ch, ch1;
+      int ordinal = 0;
+      while (index < str.length()) {
+         if(str.charAt(index) != '\\') { retval += str.charAt(index++); continue; }
+         ch = str.charAt(++index);
+         if(ch == 'b') { retval += '\b'; index++; continue; }
+         if(ch == 't') { retval += '\t'; index++; continue; }
+         if(ch == 'n') { retval += '\n'; index++; continue; }
+         if(ch == 'f') { retval += '\f'; index++; continue; }
+         if(ch == 'r') { retval += '\r'; index++; continue; }
+         if(ch == '"') { retval += '\"'; index++; continue; }
+         if(ch == '\'') { retval += '\''; index++; continue; }
+         if(ch == '\\') { retval += '\\'; index++; continue; }
+         if(ch >= '0' && ch <= '7'){
+            ordinal = ((int)ch) - ((int)'0'); index++;
+            ch1 = str.charAt(index);
+            if(ch1 >= '0' && ch1 <= '7'){
+               ordinal = ordinal*8 + ((int)ch1) - ((int)'0'); index++;
+               ch1 = str.charAt(index);
+               if(ch <= '3' && ch1 >= '0' && ch1 <= '7'){
+                  ordinal = ordinal*8 + ((int)ch1) - ((int)'0'); index++;
+               }
+            }
+            retval += (char)ordinal;
+            continue;
+         }
+         if(ch == 'u'){
+            ordinal = 0;
+            for(int i = 0; i < 4; i++){
+               index++; ch = str.charAt(index);
+               ordinal = ordinal*16+hexval(ch);
+            }
+            index++;
+            retval += (char)ordinal;
+            continue;
+         }
+      }
+      return retval;
+   }
+   static int hexval(char c){
+      int r = "0123456789ABCDEF".indexOf(Character.toUpperCase(c));
+      if(r >= 0)return r;
+      throw new RuntimeException(" ** Bad Escaped Character");
+   }
+  }
+PARSER_END(TheParser)
+
+byte parse_byte():{ int i; }{
+    i = parse_int() { return (byte)i; }
+}
+Byte parse_Byte():{ byte b; }{
+    b = parse_byte() { return b; }
+}
+short parse_short():{ int i; }{
+    i = parse_int() { return (short)i; }
+}
+Short parse_Short():{ short s; }{
+    s = parse_short() { return s; }
+}
+int parse_int():{ Token t; }{
+    t = <INT>
+    { if(t.image.length() > 1 && Character.toLowerCase(t.image.charAt(1)) == 'x')
+          return Integer.parseInt(t.image.substring(2), 16);
+      return Integer.parseInt(t.image); }
+}
+Integer parse_Integer():{ int i; }{
+    i = parse_int() { return i; }
+}
+long parse_long():{ Token t; }{
+    t = <INT>
+    { if(t.image.length() > 1 && Character.toLowerCase(t.image.charAt(1)) == 'x')
+          return Long.parseLong(t.image.substring(2), 16);
+    return Long.parseLong(t.image); }
+}
+Long parse_Long():{ long l; }{
+    l = parse_long() { return l; }
+}
+double parse_double():{ Token t; }{
+    t = <DOUBLE>
+    { return Double.parseDouble(t.image); }
+}
+Double parse_Double():{ double d; }{
+    d = parse_double() { return d; }
+}
+float parse_float():{ Token t; }{
+    t = <DOUBLE>
+    { return Float.parseFloat(t.image); }
+}
+Float parse_Float():{ float f; }{
+    f = parse_float() { return f; }
+}
+String parse_String():{ Token t; }{
+    t = <STRING>
+    { return unescape(t.image.substring(1,t.image.length()-1)); }
+}
+boolean parse_boolean():{ Token t; }{
+    t = <TRUE> { return true; } |
+    t = <FALSE> { return false; }
+}
+Boolean parse_Boolean():{ boolean b; }{
+    b = parse_boolean() { return b; }
+}
+char parse_char():{ Token t; }{
+    t = <CHAR>
+    { return unescape(t.image.substring(1,t.image.length()-1)).charAt(0); }
+}
+Character parse_Character():{ char c; }{
+    c = parse_char() { return c; }
+}
+ident parse_ident():{ Token t; }{
+    t = <IDENT>
+    { return new ident(t.image); }
+}
+verbatim parse_verbatim():{ Token t; }{
+    t = <TEXT>
+    { return new verbatim(t.image.substring(2,t.image.length()-2)); }
+}
+
+public MMGInstance parse_MMGInstance():{
+     double x;
+}{
+    x = parse_double()
+    { return new MMGInstance(x); }
+}
+
+public MMGSolution parse_MMGSolution():{
+     double y;
+}{
+    y = parse_double()
+    { return new MMGSolution(y); }
+}
+
+public MMGInstanceSet parse_MMGInstanceSet():{
+}{
+
+    { return new MMGInstanceSet(); }
+}
+
+public MMGDomain parse_MMGDomain():{
+}{
+
+    { return new MMGDomain(); }
+}
+
+public MMGConfig parse_MMGConfig():{
+}{
+    "mmg_config["
+    "]"
+    { return new MMGConfig(); }
+}
+
+
+public FullyQualifiedClassName parse_FullyQualifiedClassName():{
+     ident name;
+     DSLOI rest;
+}{
+    name = parse_ident()
+    rest = parse_DSLOI()
+    { return new FullyQualifiedClassName(name,rest); }
+}
+
+public DSLOI parse_DSLOI():{
+    DSLOI sup = null;
+}{
+(   sup = parse_DSCOI() { return sup; } | 
+    sup = parse_DSEOI() { return sup; } )
+}
+
+public DSCOI parse_DSCOI():{
+     ident first;
+     DSLOI rest;
+}{
+    "."
+    first = parse_ident()
+    rest = parse_DSLOI()
+    { return new DSCOI(first,rest); }
+}
+
+public DSEOI parse_DSEOI():{
+}{
+
+    { return new DSEOI(); }
+}
+
+public DomainI parse_DomainI():{
+    DomainI sup = null;
+}{
+(  { return sup; } )
+}
+
+public InstanceI parse_InstanceI():{
+    InstanceI sup = null;
+}{
+(  { return sup; } )
+}
+
+public SolutionI parse_SolutionI():{
+    SolutionI sup = null;
+}{
+(  { return sup; } )
+}
+
+public InstanceSetI parse_InstanceSetI():{
+    InstanceSetI sup = null;
+}{
+(  { return sup; } )
+}
+
+public Claim parse_Claim():{
+     RWrap<InstanceSetI> instanceSetWrapper;
+     RWrap<ProtocolI> protocolWrapper;
+     double quality;
+     double confidence;
+}{
+    instanceSetWrapper = parse_RWrap$InstanceSetI$()
+    protocolWrapper = parse_RWrap$ProtocolI$()
+    quality = parse_double()
+    confidence = parse_double()
+    { return new Claim(instanceSetWrapper,protocolWrapper,quality,confidence); }
+}
+
+public ProtocolI parse_ProtocolI():{
+    ProtocolI sup = null;
+}{
+(  { return sup; } )
+}
+
+public ProtocolSpec parse_ProtocolSpec():{
+     List<Step> steps;
+}{
+    steps = parse_List$Step$()
+    { return new ProtocolSpec(steps); }
+}
+
+public Step parse_Step():{
+     Action action;
+     Role role;
+}{
+    action = parse_Action()
+    "from"
+    role = parse_Role()
+    { return new Step(action,role); }
+}
+
+public Role parse_Role():{
+    Role sup = null;
+}{
+(   sup = parse_Alice() { return sup; } | 
+    sup = parse_Bob() { return sup; } )
+}
+
+public Alice parse_Alice():{
+}{
+    "Alice"
+    { return new Alice(); }
+}
+
+public Bob parse_Bob():{
+}{
+    "Bob"
+    { return new Bob(); }
+}
+
+public Action parse_Action():{
+    Action sup = null;
+}{
+(   sup = parse_ProvideAction() { return sup; } | 
+    sup = parse_SolveAction() { return sup; } )
+}
+
+public ProvideAction parse_ProvideAction():{
+}{
+    "instance"
+    { return new ProvideAction(); }
+}
+
+public SolveAction parse_SolveAction():{
+     int stepNo;
+}{
+    "solution"
+    "of"
+    stepNo = parse_int()
+    { return new SolveAction(stepNo); }
+}
+
+public Request parse_Request():{
+     List<Claim> forbidden;
+     List<Claim> claimsToOppose;
+     List<ProtocolRequest> protocolRequests;
+}{
+    "propose"
+    forbidden = parse_List$Claim$()
+    "oppose"
+    claimsToOppose = parse_List$Claim$()
+    "protocolRequest"
+    protocolRequests = parse_List$ProtocolRequest$()
+    { return new Request(forbidden,claimsToOppose,protocolRequests); }
+}
+
+public ProtocolRequest parse_ProtocolRequest():{
+    ProtocolRequest sup = null;
+}{
+(   sup = parse_ProvideRequest() { return sup; } | 
+    sup = parse_SolveRequest() { return sup; } )
+}
+
+public ProvideRequest parse_ProvideRequest():{
+     Claim claimToBeProvided;
+}{
+    "provide"
+    claimToBeProvided = parse_Claim()
+    { return new ProvideRequest(claimToBeProvided); }
+}
+
+public SolveRequest parse_SolveRequest():{
+     RWrap<InstanceI> instanceWrapper;
+     Option<Claim> claim;
+}{
+    "solve"
+    instanceWrapper = parse_RWrap$InstanceI$()
+    claim = parse_Option$Claim$()
+    { return new SolveRequest(instanceWrapper,claim); }
+}
+
+public Response parse_Response():{
+     List<Claim> proposed;
+     List<OpposeAction> oppositions;
+     List<ProtocolResponse> protocolResponses;
+}{
+    "propose"
+    proposed = parse_List$Claim$()
+    "oppose"
+    oppositions = parse_List$OpposeAction$()
+    "protocolResponse"
+    protocolResponses = parse_List$ProtocolResponse$()
+    { return new Response(proposed,oppositions,protocolResponses); }
+}
+
+public OpposeAction parse_OpposeAction():{
+    OpposeAction sup = null;
+}{
+(   sup = parse_Strengthening() { return sup; } | 
+    sup = parse_Refuting() { return sup; } | 
+    sup = parse_Agreement() { return sup; } )
+}
+
+public Agreement parse_Agreement():{
+}{
+    "agree"
+    { return new Agreement(); }
+}
+
+public Strengthening parse_Strengthening():{
+     double newQuality;
+}{
+    "strengthening"
+    newQuality = parse_double()
+    { return new Strengthening(newQuality); }
+}
+
+public Refuting parse_Refuting():{
+}{
+    "refuting"
+    { return new Refuting(); }
+}
+
+public ProtocolResponse parse_ProtocolResponse():{
+    ProtocolResponse sup = null;
+}{
+(   sup = parse_ProvideResponse() { return sup; } | 
+    sup = parse_SolveResponse() { return sup; } )
+}
+
+public ProvideResponse parse_ProvideResponse():{
+     RWrap<InstanceI> instanceWrapper;
+}{
+    "provide"
+    instanceWrapper = parse_RWrap$InstanceI$()
+    { return new ProvideResponse(instanceWrapper); }
+}
+
+public SolveResponse parse_SolveResponse():{
+     RWrap<SolutionI> solutionWrapper;
+}{
+    "solve"
+    solutionWrapper = parse_RWrap$SolutionI$()
+    { return new SolveResponse(solutionWrapper); }
+}
+
+public SCGConfig parse_SCGConfig():{
+     FullyQualifiedClassName domain;
+     Cons<FullyQualifiedClassName> protocols;
+     TournamentStyle tournamentStyle;
+     int turnDuration;
+     int maxNumAvatars;
+     double minStrengthening;
+     double initialReputation;
+     double maxReputation;
+     double reputationFactor;
+     int minProposals;
+     int maxProposals;
+     int numRounds;
+     boolean proposedClaimMustBeNew;
+     double minConfidence;
+}{
+    "scg_config["
+    "domain:"
+    domain = parse_FullyQualifiedClassName()
+    "protocols:"
+    protocols = parse_Cons$FullyQualifiedClassName$()
+    "tournamentStyle:"
+    tournamentStyle = parse_TournamentStyle()
+    "turnDuration:"
+    turnDuration = parse_int()
+    "maxNumAvatars:"
+    maxNumAvatars = parse_int()
+    "minStrengthening:"
+    minStrengthening = parse_double()
+    "initialReputation:"
+    initialReputation = parse_double()
+    "maxReputation:"
+    maxReputation = parse_double()
+    "reputationFactor:"
+    reputationFactor = parse_double()
+    "minProposals:"
+    minProposals = parse_int()
+    "maxProposals:"
+    maxProposals = parse_int()
+    "numRounds:"
+    numRounds = parse_int()
+    "proposedClaimMustBeNew:"
+    proposedClaimMustBeNew = parse_boolean()
+    "minConfidence:"
+    minConfidence = parse_double()
+    "]"
+    { return new SCGConfig(domain,protocols,tournamentStyle,turnDuration,maxNumAvatars,minStrengthening,initialReputation,maxReputation,reputationFactor,minProposals,maxProposals,numRounds,proposedClaimMustBeNew,minConfidence); }
+}
+
+public TournamentStyle parse_TournamentStyle():{
+    TournamentStyle sup = null;
+}{
+(   sup = parse_FullRoundRobin() { return sup; } | 
+    sup = parse_KnockOut() { return sup; } | 
+    sup = parse_SwissStyleTournament() { return sup; } )
+}
+
+public FullRoundRobin parse_FullRoundRobin():{
+}{
+    "full"
+    "round-robin"
+    { return new FullRoundRobin(); }
+}
+
+public KnockOut parse_KnockOut():{
+}{
+    "knockout"
+    { return new KnockOut(); }
+}
+
+public SwissStyleTournament parse_SwissStyleTournament():{
+}{
+    "swiss"
+    { return new SwissStyleTournament(); }
+}
+
+public DomainConfigI parse_DomainConfigI():{
+    DomainConfigI sup = null;
+}{
+(  { return sup; } )
+}
+
+public Config parse_Config():{
+     SCGConfig scgCfg;
+     RWrap<DomainConfigI> domainConfigWrapper;
+}{
+    scgCfg = parse_SCGConfig()
+    domainConfigWrapper = parse_RWrap$DomainConfigI$()
+    { return new Config(scgCfg,domainConfigWrapper); }
+}
+
+public AvatarI parse_AvatarI():{
+    AvatarI sup = null;
+}{
+(  { return sup; } )
+}
+
+
+
+
+
+
+
+
+public RBColor parse_RBColor():{
+    RBColor sup = null;
+}{
+(   sup = parse_RED() { return sup; } | 
+    sup = parse_BLACK() { return sup; } )
+}
+
+public RED parse_RED():{
+}{
+    "red"
+    { return new RED(); }
+}
+
+public BLACK parse_BLACK():{
+}{
+    "black"
+    { return new BLACK(); }
+}
+
+
+
+
+
+
+
+
+
+
+public RWrap<DomainConfigI> parse_RWrap$DomainConfigI$():{
+     FullyQualifiedClassName className;
+     verbatim wrappee;
+}{
+    className = parse_FullyQualifiedClassName()
+    wrappee = parse_verbatim()
+    { return new RWrap<DomainConfigI>(className,wrappee); }
+}
+public Cons<FullyQualifiedClassName> parse_Cons$FullyQualifiedClassName$():{
+     FullyQualifiedClassName first;
+     List<FullyQualifiedClassName> rest;
+}{
+    first = parse_FullyQualifiedClassName()
+    rest = parse_List$FullyQualifiedClassName$()
+    { return new Cons<FullyQualifiedClassName>(first,rest); }
+}
+public List<FullyQualifiedClassName> parse_List$FullyQualifiedClassName$():{
+    List<FullyQualifiedClassName> sup = null;
+}{
+(   sup = parse_Cons$FullyQualifiedClassName$() { return sup; } | 
+    sup = parse_Empty$FullyQualifiedClassName$() { return sup; } )
+}
+public Empty<FullyQualifiedClassName> parse_Empty$FullyQualifiedClassName$():{
+}{
+
+    { return new Empty<FullyQualifiedClassName>(); }
+}
+public RWrap<SolutionI> parse_RWrap$SolutionI$():{
+     FullyQualifiedClassName className;
+     verbatim wrappee;
+}{
+    className = parse_FullyQualifiedClassName()
+    wrappee = parse_verbatim()
+    { return new RWrap<SolutionI>(className,wrappee); }
+}
+public RWrap<InstanceI> parse_RWrap$InstanceI$():{
+     FullyQualifiedClassName className;
+     verbatim wrappee;
+}{
+    className = parse_FullyQualifiedClassName()
+    wrappee = parse_verbatim()
+    { return new RWrap<InstanceI>(className,wrappee); }
+}
+public List<ProtocolResponse> parse_List$ProtocolResponse$():{
+    List<ProtocolResponse> sup = null;
+}{
+(   sup = parse_Cons$ProtocolResponse$() { return sup; } | 
+    sup = parse_Empty$ProtocolResponse$() { return sup; } )
+}
+public Empty<ProtocolResponse> parse_Empty$ProtocolResponse$():{
+}{
+
+    { return new Empty<ProtocolResponse>(); }
+}
+public Cons<ProtocolResponse> parse_Cons$ProtocolResponse$():{
+     ProtocolResponse first;
+     List<ProtocolResponse> rest;
+}{
+    first = parse_ProtocolResponse()
+    rest = parse_List$ProtocolResponse$()
+    { return new Cons<ProtocolResponse>(first,rest); }
+}
+public List<OpposeAction> parse_List$OpposeAction$():{
+    List<OpposeAction> sup = null;
+}{
+(   sup = parse_Cons$OpposeAction$() { return sup; } | 
+    sup = parse_Empty$OpposeAction$() { return sup; } )
+}
+public Empty<OpposeAction> parse_Empty$OpposeAction$():{
+}{
+
+    { return new Empty<OpposeAction>(); }
+}
+public Cons<OpposeAction> parse_Cons$OpposeAction$():{
+     OpposeAction first;
+     List<OpposeAction> rest;
+}{
+    first = parse_OpposeAction()
+    rest = parse_List$OpposeAction$()
+    { return new Cons<OpposeAction>(first,rest); }
+}
+public List<Claim> parse_List$Claim$():{
+    List<Claim> sup = null;
+}{
+(   sup = parse_Cons$Claim$() { return sup; } | 
+    sup = parse_Empty$Claim$() { return sup; } )
+}
+public Empty<Claim> parse_Empty$Claim$():{
+}{
+
+    { return new Empty<Claim>(); }
+}
+public Cons<Claim> parse_Cons$Claim$():{
+     Claim first;
+     List<Claim> rest;
+}{
+    first = parse_Claim()
+    rest = parse_List$Claim$()
+    { return new Cons<Claim>(first,rest); }
+}
+public Option<Claim> parse_Option$Claim$():{
+    Option<Claim> sup = null;
+}{
+(   sup = parse_Some$Claim$() { return sup; } | 
+    sup = parse_None$Claim$() { return sup; } )
+}
+public None<Claim> parse_None$Claim$():{
+}{
+
+    { return new None<Claim>(); }
+}
+public Some<Claim> parse_Some$Claim$():{
+     Claim just;
+}{
+    just = parse_Claim()
+    { return new Some<Claim>(just); }
+}
+public List<ProtocolRequest> parse_List$ProtocolRequest$():{
+    List<ProtocolRequest> sup = null;
+}{
+(   sup = parse_Cons$ProtocolRequest$() { return sup; } | 
+    sup = parse_Empty$ProtocolRequest$() { return sup; } )
+}
+public Empty<ProtocolRequest> parse_Empty$ProtocolRequest$():{
+}{
+
+    { return new Empty<ProtocolRequest>(); }
+}
+public Cons<ProtocolRequest> parse_Cons$ProtocolRequest$():{
+     ProtocolRequest first;
+     List<ProtocolRequest> rest;
+}{
+    first = parse_ProtocolRequest()
+    rest = parse_List$ProtocolRequest$()
+    { return new Cons<ProtocolRequest>(first,rest); }
+}
+public List<Step> parse_List$Step$():{
+    List<Step> sup = null;
+}{
+(   sup = parse_Cons$Step$() { return sup; } | 
+    sup = parse_Empty$Step$() { return sup; } )
+}
+public Empty<Step> parse_Empty$Step$():{
+}{
+
+    { return new Empty<Step>(); }
+}
+public Cons<Step> parse_Cons$Step$():{
+     Step first;
+     List<Step> rest;
+}{
+    first = parse_Step()
+    rest = parse_List$Step$()
+    { return new Cons<Step>(first,rest); }
+}
+public RWrap<ProtocolI> parse_RWrap$ProtocolI$():{
+     FullyQualifiedClassName className;
+     verbatim wrappee;
+}{
+    className = parse_FullyQualifiedClassName()
+    wrappee = parse_verbatim()
+    { return new RWrap<ProtocolI>(className,wrappee); }
+}
+public RWrap<InstanceSetI> parse_RWrap$InstanceSetI$():{
+     FullyQualifiedClassName className;
+     verbatim wrappee;
+}{
+    className = parse_FullyQualifiedClassName()
+    wrappee = parse_verbatim()
+    { return new RWrap<InstanceSetI>(className,wrappee); }
+}
+TOKEN: { < INT : ("+" | "-")? ( (["0"-"9"])+ 
+                                  | ("0" ["x","X"]) (["0"-"9","a"-"f","A"-"F"])+ ) >
+       | < DOUBLE : ("-")?(["0"-"9"])+ "." (["0"-"9"])+ (<EXPON>)?
+                            | "." (["0"-"9"])+  (<EXPON>)? >
+       | < #EXPON: ["e","E"] (["+","-"])? (["0"-"9"])+ > }
+SKIP : { " " | "\t" | "\n" | "\r" | "\r\n" }
+SKIP : { < "//" (~["\n","\r"])* ("\n"|"\r\n") >
+       | < "/*" (~["*"])* "*" (~["/"] (~["*"])* "*")* "/" > }
+TOKEN: { < TRUE : "true" >
+       | < FALSE : "false" > }
+TOKEN: { < CHAR: "\'" 
+              ( (~["\'","\\","\n","\r"]) | 
+                ("\\" ( ["n","t","b","r","f","\\","\'","\""] |
+                            ["0"-"7"] ( ["0"-"7"] )? |
+                            ["0"-"3"] ["0"-"7"] ["0"-"7"] ) ) )
+              "\'" >
+       | < STRING :
+              "\""
+              (   (~["\"","\\","\n","\r"])
+                | ("\\"
+                    ( ["n","t","b","r","f","\\","'","\""]
+                    | ["0"-"7"] ( ["0"-"7"] )?
+                    | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+                    )
+                  )
+              )*
+              "\"" >
+       | < TEXT : ( "{{" (~["}"])* ( "}" ~["}"] (~["}"])* )* "}}" ) >
+       | < IDENT : ["a"-"z","A"-"Z","$","_"]
+                   (["a"-"z","A"-"Z","0"-"9","_","$"])* > }
+

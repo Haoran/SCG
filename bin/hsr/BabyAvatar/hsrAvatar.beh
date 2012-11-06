@@ -1,0 +1,85 @@
+HSRAvatar{{
+
+private Config config;
+	
+	/* Constructor to be called during registration where you supply config*/
+	public HSRAvatar(Config cfg){
+		config = cfg;
+	}
+	
+	/**proposing random unique claims which are not in the forbidden list**/
+	public List<Claim> propose(List<Claim> forbiddenClaims){
+		List<Claim> claims = List.create();
+		SCGConfig scg_cfg = config.getScgCfg();
+		int maxProposals = scg_cfg.getMaxProposals() -1;
+		for(int i =0; i< maxProposals;i++){
+			Claim claim = generateRandomClaim();
+			while(forbiddenClaims.contains(claim) || claims.contains(claim)){
+				claim = generateRandomClaim();
+			}
+			claims = claims.append(claim);
+		}
+		return claims;
+	}
+	
+	/**Random oppose method - randomly agrees, refutes or strengthens by a factor of 1 **/
+	public List<OpposeAction> oppose(List<Claim> claimsToBeOpposed){
+		return claimsToBeOpposed.map(new List.Map<Claim, OpposeAction>() {
+			public OpposeAction map(Claim claim){
+				Random rand = new Random();
+				int randOppose = rand.nextInt(3);
+				if(randOppose == 0)
+					return new Agreement();
+				else if(randOppose == 1){
+					HSRInstanceSet is = (HSRInstanceSet)claim.getInstanceSet();
+					int n = is.getSingleton().getN();
+					int q = (int)Math.ceil(claim.getQuality() * n);
+					SCGConfig scg_cfg = config.getScgCfg();					
+						if(q>1)
+							return new Strengthening(claim.getQuality() - scg_cfg.getMinStrengthening());
+						else
+							return new Refuting();		
+						 
+				}else 
+					return new Refuting();
+            }
+		});
+	}
+	
+	/** providing instance - in HSR this is trivial as the instanceSet is singleton**/
+	public InstanceI provide(Claim claimToBeProvided){
+		HSRInstanceSet hsrInstanceSet = (HSRInstanceSet) claimToBeProvided.getInstanceSet();
+		HSRInstance hsrInstance = new HSRInstance(hsrInstanceSet.getSingleton().getN(), hsrInstanceSet.getSingleton().getK());
+		return hsrInstance;
+	}
+	
+	/**solving using trivial algorithm of dropping jars lowest rung upwards - max number of left branch = 1**/
+	public SolutionI solve(SolveRequest solveRequest){
+		HSRInstance hsrInstance = (HSRInstance)solveRequest.getInstance();
+		HSRSolution solution = solve(1, hsrInstance.getN());
+		return solution;
+	}
+	
+	private HSRSolution solve(int n, int maxValueIntermediateNode){
+		if(n == maxValueIntermediateNode) return new Simple(n-1);
+		else{
+			return new Compound(n, new Simple(n-1), solve(n+1, maxValueIntermediateNode));
+		}
+	}
+	
+	/** Generates random claim */
+	private Claim generateRandomClaim(){
+		Random rand = new Random();		
+		int randN = 2+ rand.nextInt(20);
+		//check if N value is less than maxN in HSRConfig
+		HSRConfig hsr_cfg = (HSRConfig)config.getDomainConfig();
+		if(randN > hsr_cfg.getMaxN()){
+			randN = 2+ rand.nextInt(hsr_cfg.getMaxN() - 2);
+		}
+		int randK = 1 + rand.nextInt(randN - 1);
+		int randQ = 1+ rand.nextInt(randN - 1);
+		HSRInstance singleton = new HSRInstance(randN, randK); // get the maximum allowed n from config
+		HSRInstanceSet instanceSet = new HSRInstanceSet(singleton );		
+		return new Claim(instanceSet, ForAllExistsMin.getInstance(),((double)randQ)/randN,1);
+	}
+}}

@@ -1,0 +1,68 @@
+<project name="cs6515" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<!--
+	*********************
+	ANT Build File for the CS 5500 project 
+	*********************
+	-->
+
+	<!-- Basic Directory Definitions -->
+	<property name="build.dir" value="Build" />
+	<property name="src.dir" value="src" />
+	<property name="srcGen.dir" value="gen" />
+	<property name="test.dir" value="test" />
+	<property name="test.report.dir" location="testreport" />
+
+	<!-- Classpath for the project-libraries -->
+	<path id="classpath">
+		<fileset dir=".">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+
+	<!-- Define the classpath which includes the junit.jar and the classes after compiling-->
+	<path id="junit.class.path">
+		<pathelement location="${build.dir}" />
+		<fileset dir=".">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<target name="build" description="--> resolve dependencies, compile and run the project">
+		<mkdir dir="${build.dir}" />
+		<javac destdir="${build.dir}" includeantruntime="true">
+			<src path="${src.dir}" />
+			<src path="${srcGen.dir}" />
+			<src path="${test.dir}" />
+			<classpath refid="classpath" />
+		</javac>
+	</target>
+
+	<!-- executes all tests (Test*.java files) and generates 
+	html reports in the ${test.report.dir} -->
+	<target name="test" depends="build" description="--> test the project">
+		<mkdir dir="${test.report.dir}" />
+		<junit printsummary="on" fork="true" haltonfailure="false" includeantruntime="true">
+			<classpath refid="junit.class.path" />
+			<formatter type="xml" />
+			<batchtest todir="${test.report.dir}">
+				<fileset dir="${test.dir}">
+					<include name="**/Test*.java" />
+				</fileset>
+			</batchtest>
+		</junit>
+		<junitreport todir="${test.report.dir}">
+			<fileset dir="${test.report.dir}" />
+			<report todir="${test.report.dir}" />
+		</junitreport>
+	</target>
+
+	<target name="clean" description="--> clean the project">
+		<delete includeemptydirs="true" quiet="true">
+			<fileset dir="${build.dir}" />
+			<fileset dir="${test.report.dir}" />
+		</delete>
+	</target>
+
+</project>

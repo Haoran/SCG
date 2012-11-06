@@ -1,0 +1,143 @@
+package scg.net.admin;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.Serializable;
+
+import scg.ProtocolRequest;
+import scg.logging.Logger;
+import scg.net.admin.PlayerProxy;
+import scg.net.PlayerSpec;
+import scg.tournament.PlayerStatus;
+import edu.neu.ccs.demeterf.http.classes.HTTPReq;
+import edu.neu.ccs.demeterf.http.classes.HTTPResp;
+import edu.neu.ccs.demeterf.lib.List;
+
+/** A remote proxy that implements distributed Admin/Player communication */
+public class RemotePlayerProxy extends PlayerProxy implements Serializable {
+
+    /** Save HTTP interactions? */
+	transient private static java.io.PrintStream save = null;
+    RemotePlayerProxy opponent;
+    transient List<ProtocolRequest> protocolRequests = List.<ProtocolRequest>create();
+    double reputation;
+    /** The maximum response size... should be big, or 0 */
+    transient private long maxResponse;
+    transient private PlayerStatus playerStatus;
+    /** Was this Player Kicked? */
+    private boolean kicked = false;
+    /** The reason the Player was Kicked */
+    String kickReason = "";
+    double playerScore;
+    
+    /** Save HTTP responses? */
+    public static void setSaveFile(String file) throws IOException{
+        save = new PrintStream(new FileOutputStream(file));
+    }
+
+    /** Create a proxy that sends requests over a socket to the Player */
+    public RemotePlayerProxy(PlayerSpec playerSpec, long max, double reputation) {
+        super(playerSpec);
+        maxResponse = max;
+        this.reputation = reputation;
+        this.playerScore = 0;
+        this.playerStatus = new PlayerStatus(playerSpec.getName(), reputation);
+    }
+
+    private void saveWrap(String s){
+        if (save == null) {
+            return;
+        }
+        save.println("----------------" + this.getSpec().getName() + "-------------------\n" + s
+                + "\n----------------------------------------------\n");
+        save.flush();
+    }
+
+    /** Send the request over the wire */
+    @Override
+    public HTTPResp contactPlayer(HTTPReq req, int timelimit){
+        saveWrap(req.toString());
+        try {
+            long timeBefore = System.currentTimeMillis();
+            HTTPResp resp = req.send(getSpec().getAddress(), getSpec().getPort(), timelimit * 1000, maxResponse);
+            saveWrap(resp.toString());
+            long timeAfter = System.currentTimeMillis();
+            long duration = (timeAfter - timeBefore) / 1000;
+            /** leave'em 1 more second grace */
+            if (duration > timelimit + 1) {
+                throw new RuntimeException(" Transaction took " + duration + "seconds.\n" 
+                		+ getSpec().getName() + " is kicked out by admin");
+            }
+            return resp;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+	@Override
+	public void addProtocolRequest(ProtocolRequest protocolRequest) {
+		this.protocolRequests = this.protocolRequests.append(protocolRequest);
+	}
+	
+	public List<ProtocolRequest> getProtocolRequests() {
+		return this.protocolRequests;
+	}
+	
+	public void clearProtocolRequest() {
+		this.protocolRequests = this.protocolRequests.pop(this.protocolRequests.length());
+	}
+	
+	public void setOpponent(RemotePlayerProxy opponent) {
+		this.opponent = opponent;
+	}
+	
+	public RemotePlayerProxy getOpponent() {
+		return this.opponent;
+	}
+	
+	public void setReputation(double reputation) {
+		this.reputation = reputation;
+	}
+
+	public double getReputation() {
+		return this.reputation;
+	}
+	public PlayerStatus getPlayerStatus() {
+		return this.playerStatus;
+	}
+	
+	public void updatePlayerStatus() {
+		this.playerStatus.setScore(this.reputation); 
+	}
+	
+	/** Has the Player Been Kicked out of the Competition? */
+    public boolean wasKicked() {
+        return kicked;
+    }
+    /** Get the Reason the Player was Kicked */
+    public String getKickReason(){
+        return kickReason;
+    }
+
+    /** Set the Reason the Player was Kicked */
+    public void setKickReason(String kr){ 
+        kickReason = kr;
+    }
+
+    public void setKicked(boolean kicked){
+        this.kicked = kicked;
+    }
+    
+    /** Update the player score */
+    public void updatePlayerScore(){ 
+        this.playerScore += 3;
+    }
+    
+    /** Get the player score */
+    public double getPlayerScore(){ 
+        return this.playerScore;
+    }
+}

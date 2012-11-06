@@ -1,0 +1,33 @@
+Command {{
+    public abstract String getFormat();
+}}
+
+AddTournament {{
+    public String getFormat() {
+        return "add_tournament {tournament name} {config} {start delay (mins)}";
+    }
+}}
+
+TournamentState {{
+    public String getFormat() {
+        return "tournament_state";
+    }
+}}
+
+SignUp {{
+    public String getFormat() {
+        return "sign_up {name} {password}";
+    }
+}}
+
+ApproveUser {{
+    public String getFormat() {
+        return "approve_user {name}";
+    }
+}}
+
+RegisterPlayer {{
+    public String getFormat() {
+        return "register_player {tournament id} {name} {password}";
+    }
+}}

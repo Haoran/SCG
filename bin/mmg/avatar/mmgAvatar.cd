@@ -1,0 +1,12 @@
+nogen include "../../scg/scg.cd";
+
+package mmg.avatar;
+
+import java.util.Random;
+import java.lang.reflect.Method;
+
+import scg.*;
+import scg.protocol.*;
+import mmg.*;
+
+MMGAvatar = implements AvatarI.

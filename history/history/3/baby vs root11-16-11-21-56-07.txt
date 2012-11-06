@@ -1,0 +1,24 @@
+request propose  oppose  protocolRequest  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsEqual {{      }} 0.61 1.0  oppose  protocolResponse  
+teamName  {{ baby }}  
+reputation 100.0
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsEqual {{      }} 0.61 1.0  protocolRequest  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsEqual {{      }} 0.61 1.0  oppose agree  protocolResponse  
+teamName  {{ root }}  
+reputation 100.0
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsEqual {{      }} 0.61 1.0  protocolRequest provide mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsEqual {{      }} 0.61 1.0  
+reply propose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsEqual {{      }} 0.61 1.0  oppose agree  protocolResponse provide mmg.MMGInstance {{  0.5029537918984814  }}   
+teamName  {{ baby }}  
+reputation 100.0
+
+ request propose  oppose mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsEqual {{      }} 0.61 1.0  protocolRequest provide mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsEqual {{      }} 0.61 1.0 solve mmg.MMGInstance {{ 0.5029537918984814 }} mmg.MMGInstanceSet {{      }} scg.protocol.ForAllExistsEqual {{      }} 0.61 1.0  
+reply  {{ is kicked out by admin
+Reason: invalid solution }}  
+teamName  {{ baby }}  
+reputation 98.0
+
+  
+ {{ baby }}  98.0
+ {{ root }}  102.0

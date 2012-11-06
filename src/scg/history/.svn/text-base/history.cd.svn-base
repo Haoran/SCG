@@ -1,0 +1,41 @@
+nogen include "../scg.cd";
+
+package scg.history;
+
+import java.io.*;
+import scg.*;
+import edu.neu.ccs.demeterf.lib.*;
+import scg.net.admin.RemotePlayerProxy;
+
+SmartHistory = <loc> List(ClaimWithResponse) *s*l
+				<player1> verbatim *s
+				<player1Score> double *l
+				<player2> verbatim *s
+				<player2Score> double.
+
+ClaimWithResponse = "claim" *s <claim> Claim *s*l 
+		    "proposer" *s <proposer> verbatim *s*l 
+		    "opposer" *s <opposer> verbatim *s*l 
+		    "action" *s <opposeAction> OpposeAction *s*l 
+		    "responses" *s <responses> List(AnnotatedResponse) *s 
+		    "winner" *s <winner> verbatim *s*l 
+		    "pointsWon" *s <pointsWon> double *l*l.
+
+AnnotatedResponse = "provider" *s <provider> verbatim *s
+		    "pr" *s <pr> ProtocolResponse *l.
+
+RawHistory = <entries> List(RHEntry) *s*l
+				<player1> verbatim *s
+				<player1Score> double *l
+				<player2> verbatim *s
+				<player2Score> double.
+
+RHEntry = "request" *s <request> Request *s*l 
+          "reply" *s <reply> Reply *s*l
+		  "teamName" *s <teamName> verbatim *s*l
+		  "reputation" *s <reputation> double *l*l.
+
+Reply = HistoryResponse | KickJustification.
+
+HistoryResponse = <response> Response.
+KickJustification = <reason> verbatim.

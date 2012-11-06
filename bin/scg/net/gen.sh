@@ -1,0 +1,1 @@
+java demeterf network.cd network.beh --mutable --dgp:Print:PrintToString --pcdgp:Getters:Setters ../../../gen/

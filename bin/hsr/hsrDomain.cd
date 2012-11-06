@@ -1,0 +1,24 @@
+nogen include "../scg/scg.cd";
+
+package hsr;
+
+import scg.*;
+
+HSRInstance = "HSR" "(" <n> int "," <k> int ")" implements InstanceI .
+
+HSRSolution = Simple | Compound implements SolutionI.
+Simple = "h" *s <highest_safe_rung> int.
+Compound = "("
+  <question> int *s
+    "y" *s <yes> HSRSolution *s
+      "n"  *s <no>  HSRSolution ")".
+      
+HSRInstanceSet = <singleton> HSRInstance implements InstanceSetI. 
+
+HSRDomain = implements DomainI.  
+
+HSRConfig = "hsr_config[" 
+			*l*t "maxN:" *s <maxN> int
+			//maximum value of n in Instance allowed
+            *l 
+			"]" implements DomainConfigI. 

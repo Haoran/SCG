@@ -1,0 +1,49 @@
+10
+
+dir
+70
+svn+ssh://madhuvanthi@svn.code.sf.net/p/generic-scg/code-0/GenericSCG/src
+svn+ssh://madhuvanthi@svn.code.sf.net/p/generic-scg/code-0
+
+
+
+2011-11-29T22:25:57.252722Z
+67
+madhuvanthi
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+41228acf-e580-4103-b9fb-03e02d49ce46
+
+csp
+dir
+
+hsr
+dir
+
+mmg
+dir
+
+nwf
+dir
+
+response
+dir
+
+scg
+dir
+
+ttt
+dir
+

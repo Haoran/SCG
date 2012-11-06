@@ -1,0 +1,94 @@
+package scg.tournament;
+
+import java.io.IOException;
+import java.util.Iterator;
+import scg.logging.Logger;
+
+import edu.neu.ccs.demeterf.lib.List;
+import scg.Config;
+import scg.game.ActiveGame;
+import scg.game.BinaryGame;
+import scg.game.GamePlayer;
+import scg.history.HistoryFile;
+
+public class Tournament implements Runnable {
+
+	int tournamentId;
+	Config config;
+	java.util.List<GamePlayer> gamePlayers;
+	TournamentStatus tournamentStatus;
+	List<PlayerStatus> playerStatusList;
+	HistoryFile tournamentHistory = null;
+	/** logger instance for the player */
+	private static scg.logging.Logger log;
+	Tournament(int tournamentId, Config config, java.util.List<GamePlayer> gamePlayers) {
+		this.config = config;
+		this.gamePlayers = gamePlayers;
+		List<PlayerStatus> playerStatusList = getListOfPlayerStatus(gamePlayers);
+		this.tournamentStatus = new TournamentStatus(playerStatusList, List.<ActiveGame>create());
+		this.playerStatusList = playerStatusList;
+		this.tournamentId = tournamentId;
+	}
+	
+	private List<PlayerStatus> getListOfPlayerStatus(java.util.List<GamePlayer> gamePlayers) {
+		List<PlayerStatus> playerStatus  = List.<PlayerStatus>create();
+		for(Iterator<GamePlayer> it = gamePlayers.iterator(); it.hasNext();) {
+			GamePlayer gamePlayer = it.next();
+			playerStatus = playerStatus.append(new PlayerStatus(gamePlayer.getSpec().getName(), 0));
+		}
+		return playerStatus;
+	}
+	
+	public TournamentStatus getTournamentStatus() {
+		return this.tournamentStatus;
+	}
+	
+	public void setHistoryFile(HistoryFile tournamentHistory){
+		this.tournamentHistory = tournamentHistory;
+	}
+	
+		
+	public void run() {
+		
+		try {
+			log = Logger.text(System.out, scg.Util.logFileName("TournamentException"));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			log.error("IOException: " + e1.getMessage());
+		}
+        for (int playerIndex1 = 0; playerIndex1 < gamePlayers.size(); playerIndex1++) {
+            for (int playerIndex2 = playerIndex1 + 1; playerIndex2 < gamePlayers.size(); playerIndex2++) {
+                try {
+					startGame(tournamentHistory, gamePlayers.get(playerIndex1), playerStatusList.lookup(playerIndex1), gamePlayers.get(playerIndex2), playerStatusList.lookup(playerIndex2));
+                }
+                catch (Exception e) {
+					e.printStackTrace();
+					log.notify("Tournament IOException Game1: " + e.getMessage());
+					log.notify("check the console: debug using stacktrace");
+				}
+                try
+                {
+					startGame(tournamentHistory, gamePlayers.get(playerIndex2), playerStatusList.lookup(playerIndex2), gamePlayers.get(playerIndex1), playerStatusList.lookup(playerIndex1));
+				} 
+                catch (Exception e) {
+					e.printStackTrace();
+					log.notify("Tournament IOException Game2: " + e.getMessage());
+					log.notify("check the console: debug using stacktrace");
+				}
+            }
+        }
+	}
+	
+    private void startGame(HistoryFile tournamentHistory, GamePlayer player1, PlayerStatus player1Status, GamePlayer player2, PlayerStatus player2Status) throws Exception{
+        BinaryGame currentGame = new BinaryGame(tournamentId, player1.getRemotePlayerProxy(), player2.getRemotePlayerProxy(), config);
+        tournamentStatus.getActiveGames().add(currentGame.getActiveGame());
+        currentGame.start();
+        //Karan/Haoran: Scoring fix after kick out.
+        player1.getRemotePlayerProxy().setKicked(false);
+        player2.getRemotePlayerProxy().setKicked(false);
+        
+        player1Status.setScore(player1.getRemotePlayerProxy().getPlayerScore());
+        player2Status.setScore(player2.getRemotePlayerProxy().getPlayerScore());
+        tournamentStatus.getActiveGames().remove(currentGame.getActiveGame());        
+    }
+}

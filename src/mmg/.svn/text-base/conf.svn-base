@@ -1,0 +1,17 @@
+scg_config[
+domain:mmg.MMGDomain
+protocols: scg.protocol.ForAllExistsMax
+tournamentStyle: full round-robin
+turnDuration: 60 //seconds
+maxNumAvatars: 40
+minStrengthening: 0.0000000001
+initialReputation: 100.0
+maxReputation: 1000.0
+reputationFactor: 0.4
+minProposals: 1
+maxProposals: 1
+numRounds: 5
+proposedClaimMustBeNew: false
+minConfidence: 0.5
+]
+mmg.MMGConfig {{ mmg_config[ ] }}

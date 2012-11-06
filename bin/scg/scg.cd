@@ -1,0 +1,123 @@
+// Version 3: March 15th
+// Request and Response are now two aggregate structures with "one" propose and "one" oppose entries.
+
+nogen include "../scg/lib.java.cd";
+
+package scg;
+
+nogen RWrap(T) = <className> FullyQualifiedClassName <wrappee> verbatim.
+FullyQualifiedClassName =  <name> ident <rest> DSLOI.
+DSLOI = DSCOI | DSEOI.
+DSCOI = "." <first> ident <rest> DSLOI.
+DSEOI = .
+
+// Domain
+interface DomainI = .
+interface InstanceI = .
+interface SolutionI = .
+interface InstanceSetI = .
+
+// Claims
+Claim =  <instanceSetWrapper> RWrap(InstanceSetI) <protocolWrapper> RWrap(ProtocolI) <quality> double *s <confidence> double.
+
+// Protocols
+interface ProtocolI = .  
+
+ProtocolSpec = <steps> List(Step).
+Step = <action> Action "from" <role> Role .
+interface Role = Alice | Bob.
+Alice = "Alice".
+Bob = "Bob".
+interface Action = ProvideAction | SolveAction.
+//can only provide for the claim
+ProvideAction = "instance". 
+//solve the instance provided in step # stepNo
+//step # -1 for the singleton instance in claim
+// stepNo is 0-based
+SolveAction = "solution" "of" *s <stepNo> int. 
+
+
+Request = "propose" *s <forbidden> List(Claim) *s
+             "oppose" *s <claimsToOppose> List(Claim) *s
+             "protocolRequest" *s <protocolRequests> List(ProtocolRequest).
+ProtocolRequest = ProvideRequest | SolveRequest.
+ProvideRequest = "provide" *s <claimToBeProvided> Claim.             
+SolveRequest = "solve" *s <instanceWrapper> RWrap(InstanceI) <claim> Option(Claim).
+
+Response = "propose" *s <proposed> List(Claim) *s
+		   "oppose" *s <oppositions> List(OpposeAction) *s
+		   "protocolResponse" *s <protocolResponses> List(ProtocolResponse).
+
+OpposeAction = Strengthening | Refuting | Agreement.
+Agreement = "agree".
+Strengthening = "strengthening" *s <newQuality> double.
+Refuting = "refuting".
+
+ProtocolResponse = ProvideResponse | SolveResponse.
+ProvideResponse = "provide" *s <instanceWrapper> RWrap(InstanceI).
+SolveResponse = "solve" *s <solutionWrapper> RWrap(SolutionI).
+
+	 
+
+//config common to all games
+SCGConfig =
+  "scg_config["
+  			*l*t "domain:" *s <domain> FullyQualifiedClassName
+  			// fully qualified class name of Domain used
+  			
+  			*l*t "protocols:" *s <protocols> Cons(FullyQualifiedClassName)
+  			// fully qualified class names of protocols used
+  
+            *l*t "tournamentStyle:" *s <tournamentStyle> TournamentStyle
+            // tournament style
+
+            *l*t "turnDuration:" *s <turnDuration> int
+        	// number of seconds
+
+            *l*t "maxNumAvatars:" *s <maxNumAvatars> int
+        	// per tournament
+
+            *l*t "minStrengthening:" *s <minStrengthening> double
+        	// minimum amount of strengthening by a strengthening oppose
+
+            *l*t "initialReputation:" *s <initialReputation> double
+        	// initial reputation of an avatar
+
+            *l*t "maxReputation:" *s <maxReputation> double
+        	// maximum reputation a scholar can reach
+        	// game ends when reached
+
+            *l*t "reputationFactor:" *s <reputationFactor> double
+        	// a number in [0,1] used to determine reputation gain
+        	// upon successful defense of own claim or
+        	// upon successful refutation of claim of another scholar.
+
+            *l*t "minProposals:" *s <minProposals> int
+            *l*t "maxProposals:" *s <maxProposals> int
+        	// scholars must stay active, but not too active
+
+            *l*t "numRounds:" *s <numRounds> int
+        	// the number of rounds for a tournament
+
+            *l*t "proposedClaimMustBeNew:" *s <proposedClaimMustBeNew> boolean
+        	// proposed claims must be different from previously proposed claims
+        	
+        	*l*t "minConfidence:" *s <minConfidence> double
+        	// the minimum confidence in a claim
+        	
+            *l
+         "]".
+
+TournamentStyle = FullRoundRobin | KnockOut | SwissStyleTournament.
+FullRoundRobin = "full" *s "round-robin".
+KnockOut = "knockout".
+SwissStyleTournament = "swiss".
+
+interface DomainConfigI = .       
+
+//config definitions
+Config =  <scgCfg> SCGConfig  <domainConfigWrapper> RWrap(DomainConfigI).
+
+
+//baby avatar definitions
+interface AvatarI = .	

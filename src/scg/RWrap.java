@@ -1,0 +1,83 @@
+package scg;
+import java.io.Serializable;
+import java.lang.reflect.Method;
+
+import scg.FullyQualifiedClassName;
+import edu.neu.ccs.demeterf.lib.verbatim;
+
+public class RWrap<T> implements Serializable {
+	protected FullyQualifiedClassName fullyQualifiedClassName;
+	protected verbatim wrapeeText;
+
+	private T wrapee;
+	private String className;
+	
+	@SuppressWarnings("unchecked")
+	public RWrap(FullyQualifiedClassName fullyQualifiedClassName,
+			verbatim wrapeeText) {
+		this.className = fullyQualifiedClassName.print().trim();
+		this.fullyQualifiedClassName = fullyQualifiedClassName;
+		this.wrapeeText = wrapeeText;
+		// finish parse
+		try{
+			Class<?> pgClass = Class.forName(className);
+			Method parseMethod = pgClass.getMethod("parse", String.class);
+			wrapee = (T) parseMethod.invoke(null, wrapeeText.getText());
+		} catch(Exception ex){
+			ex.printStackTrace();
+		}
+	}
+
+	public RWrap(T wrapee) {
+		this.wrapee = wrapee;
+		this.className = wrapee.getClass().getCanonicalName();
+		try {
+			this.fullyQualifiedClassName = FullyQualifiedClassName.parse(className);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		this.wrapeeText = new verbatim(wrapee.toString());
+	}
+	
+	public T getWrapee() {
+		return wrapee;
+	}
+
+	public verbatim getWrapeeText() {
+		return wrapeeText;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append(className);
+		sb.append(" ");
+		sb.append(wrapeeText.toString());
+		return sb.toString();
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((wrapee == null) ? 0 : wrapee.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		RWrap other = (RWrap) obj;
+		if (wrapee == null) {
+			if (other.wrapee != null)
+				return false;
+		} else if (!wrapee.equals(other.wrapee))
+			return false;
+		return true;
+	}
+}

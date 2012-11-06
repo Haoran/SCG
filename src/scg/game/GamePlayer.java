@@ -1,0 +1,65 @@
+package scg.game;
+
+import java.io.Serializable;
+
+import scg.net.PlayerSpec;
+import scg.net.admin.RemotePlayerProxy;
+import scg.Config;
+import scg.Request;
+import scg.Response;
+
+public class GamePlayer implements Serializable {
+
+    /** Player Id */
+    private final int id;
+    /** Proxy for contacting the player */
+    transient private final RemotePlayerProxy remotePlayerProxy;
+    
+
+    /** Return this Playe's ID Number */
+    public int getId() {
+        return id;
+    }
+
+    /** Return this Players Specification */
+    public PlayerSpec getSpec() {
+        return remotePlayerProxy.getSpec();
+    }
+
+    
+
+    /** Return the Number of Offered Challenges the Player has On the Market */
+    public int numOffered() {
+        return 0;//proposedClaims.size();
+    }
+
+    /** Return the Number of Accepted Challenges the Player has On the Market */
+    public int numProvided() {
+        return 0;//refutedClaims.size();
+    }
+    
+    /** Create a Player Store with the initial Account */
+    public GamePlayer(int playerId, RemotePlayerProxy playerProxy, double account) {
+        this.id = playerId;
+        this.remotePlayerProxy = playerProxy;
+    }
+
+    /** Take a Turn for the wrapped Player through the Proxy */
+    public Response takeTurn(Config config, Request request) throws Exception{
+    	return remotePlayerProxy.takeTurn(config,request);
+    }
+
+    
+    
+    public RemotePlayerProxy getRemotePlayerProxy() {
+    	return this.remotePlayerProxy;
+    }
+    
+    public double getAccount() {
+    	return remotePlayerProxy.getReputation();
+    }
+    
+    public RemotePlayerProxy getOpponent() {
+    	return remotePlayerProxy;
+    }
+}

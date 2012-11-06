@@ -1,0 +1,298 @@
+package scg.tournament;
+
+
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map.Entry;
+
+import edu.neu.ccs.demeterf.lib.List;
+
+import scg.exception.AuthenticationException;
+import scg.exception.ConnectionException;
+import scg.game.GamePlayer;
+import scg.net.PlayerSpec;
+import scg.net.admin.RemotePlayerProxy;
+import scg.Config;
+import scg.Constants;
+import scg.Util;
+/**
+ * Object which holds all the information required for a tournament to run.
+ * @author CS5500
+ *
+ */
+public class TournamentSetup {
+  private Date runTime;
+  private final Config config;
+  private final String name;
+  private final int tournamentId;
+  private final Hashtable<String, String> enrolledPlayers;
+  private final Hashtable<String, PlayerSpec> registeredPlayers;
+  private Hashtable<String, Double> finalTournamentScores;
+  private Status currentStatus;
+  private Tournament tournament;
+  private Thread tournamentThread;
+
+
+  public enum Status {
+    ENROLLMENT, REGISTRATION, RUNNING, STOP_REQUESTED, COMPLETE, EXCEPTION
+  }
+  
+  public TournamentSetup(int tournamentId, String name, Config config, Date runTime,
+	    Hashtable<String, String> players) {
+	      this(tournamentId, name, config, runTime, players, Status.ENROLLMENT, new Hashtable<String, Double>()); // All tournaments are initialized in this state
+	  }
+
+
+public TournamentSetup(int tournamentId, String name, Config config, Date runTime,
+      Hashtable<String, String> players, TournamentSetup.Status currentStatus, Hashtable<String, Double> finalTournamentScores) {
+    this.name = name;
+    this.tournamentId = tournamentId;
+    this.config = config;
+    this.runTime = runTime;
+    this.enrolledPlayers = players;
+    this.currentStatus = currentStatus; 
+    this.registeredPlayers = new Hashtable<String, PlayerSpec>();
+    this.finalTournamentScores = finalTournamentScores;
+  }
+
+  public synchronized Date getRunTime()
+  {
+    return runTime;
+  }
+  
+  public synchronized void setRunTime(Date runTime){
+	  this.runTime = runTime;
+  }
+
+  public synchronized int getTournamentId(){
+	  return tournamentId;
+  }
+  
+  public synchronized String getName(){
+	  return name;
+  }
+  
+  /**
+   * Enroll a player in the tournament
+   * @param player Username of the player to add
+   * @param password Password of the player to add
+   * @return True if the user was enrolled
+   */
+  public synchronized boolean enrollPlayer(String player, String password) {
+	  if (enrolledPlayers.size() >= config.getScgCfg().getMaxNumAvatars()) {
+		  return false;
+	  }
+	  
+    if (enrolledPlayers.containsKey(player)) {
+      return false;
+    }
+
+    try {
+      String hashedPasswordString = Util.encrypt(password);
+      enrolledPlayers.put(player, hashedPasswordString);
+    } catch (Exception ex) {
+      System.out.println("Failed to hash password");
+      return false;
+    }
+    return true;
+  }
+  
+  /**
+   * Unenroll a player from the tournament
+   * @param player Username of the player to unenroll
+   * @return True if the player was unenrolled
+   */
+  public synchronized boolean unEnrollPlayer(String player) {
+	    if (!enrolledPlayers.containsKey(player)) {
+	      return false;
+	    }
+
+	    try {
+	    	enrolledPlayers.remove(player);
+	    } catch (Exception ex) {
+	      System.out.println("Failed to remove user");
+	      return false;
+	    }
+	    return true;
+	  }
+
+  /**
+   * Handles registering the player in the given tournament, validates their username/password
+   * combination, and ensures the tournament is in the appropriate state to allow registrations
+   * @param client PlayerSpec object created by the registration listener
+   * @param password Password for the connected user
+   * @throws ConnectionException
+   * @throws AuthenticationException
+   */
+  public synchronized void registerPlayer(PlayerSpec client, String password) throws ConnectionException, AuthenticationException {
+    String player = client.getName();
+    if (!enrolledPlayers.containsKey(player)) {
+      System.out.println("Player " + player + " is not registered for tournament \"" + name + "\"");
+      throw new ConnectionException("Not Registered");
+    }
+
+    if (getStatus() == Status.ENROLLMENT) {
+      System.out.println("Registration is not allowed yet for tournament \"" + name + "\"");
+      throw new ConnectionException("Not In Registration Phase");
+    }
+
+    String hashedPassword = null;
+    try {
+      hashedPassword = Util.encrypt(password);
+    } catch (Exception e) {
+      System.out.println("Failed to hash password");
+      throw new ConnectionException("Invalid Password");
+    }
+
+     if (!enrolledPlayers.get(player).equalsIgnoreCase(hashedPassword))
+     {
+       System.out.println("Player " + player + " incorrect password for tournament " + name);
+       System.out.println("Password: " + password + "  Hash: " + hashedPassword +
+           "  ExpectedHash: " + enrolledPlayers.get(player));
+       throw new AuthenticationException("Unable to login with that player name/password");
+     }
+
+    if (registeredPlayers.containsKey(player)) {
+      System.out.println("Player " + player + " already connected for tournament \"" + name + "\"");
+      throw new ConnectionException("Already Connected");
+    }
+
+    System.out.println("Player " + player + " connected to tournament \"" + name + "\"");
+    registeredPlayers.put(player, client);
+  }
+
+  /**
+   * Human readable printout of the current tournament state
+   */
+  public synchronized void printState() {
+    System.out.println("Name: " + name);
+    System.out.println("Playground: " + config.getScgCfg().getDomain());
+    System.out.println("Run Time: " + DateFormat.getDateTimeInstance().format(runTime));
+
+    for (Entry<String, String> e : enrolledPlayers.entrySet()) {
+      System.out.println("\t" + e.getKey() + "\t" + e.getValue());
+    }
+  }
+
+  /**
+   * Get the serializable representation of the current tournament suitable for disk storage
+   * @return Serializable state
+   * @see Serializable
+   */
+  public synchronized SerializedTournamentSetup getSerializedSetup() {
+    return new SerializedTournamentSetup(tournamentId, name, config, runTime, enrolledPlayers, currentStatus, finalTournamentScores);
+  }
+
+  /**
+   * Current status of the tournament
+   * @return Current "running" status of the system
+   */
+  public synchronized Status getStatus() {
+    return currentStatus;
+  }
+
+  /**
+   * 
+   * @return The full configuration object for the tournament
+   */
+  public synchronized Config getConfig(){
+	  return config;
+  }
+
+  public synchronized Hashtable<String, String> getEnrolledPlayers(){
+	  return enrolledPlayers;
+  }
+  
+  public synchronized Hashtable<String, PlayerSpec> getRegisteredPlayers(){
+	  return this.registeredPlayers;
+  }
+
+  private synchronized void setStatus(Status status) {
+    currentStatus = status;
+  }
+  
+  public synchronized Tournament getTournament() {
+	    return this.tournament;
+  }
+
+  /**
+   * Updates the status of the tournament, based on the current state
+   * @return True if the status was updated
+   */
+  public boolean updateStatus() {
+    switch (getStatus()) {
+    // If we are enrolled, and we're within Constants.REGISTRATION_WINDOW minutes of
+    // the tournament runtime, set the status to REGISTRATION to allow users to begin 
+    // registering
+      case ENROLLMENT:
+        Calendar now = Calendar.getInstance();
+        now.add(Calendar.MINUTE, Constants.REGISTRATION_WINDOW);
+        if (now.getTime().getTime() >= runTime.getTime()) {
+          setStatus(Status.REGISTRATION);
+          return true;
+        }
+        return false;
+        // If we're in the registered state, and the time to run the tournament has past, start the tournament
+        // and put it in the RUNNING state.
+      case REGISTRATION:
+        if (Calendar.getInstance().getTime().getTime() >= runTime.getTime()) {
+          
+          setStatus(Status.RUNNING);
+          
+          Hashtable<String, PlayerSpec> registeredPlayers = getRegisteredPlayers();
+	      List<RemotePlayerProxy> remotePlayerProxies = wrapPlayerSpecs(registeredPlayers, 0, getConfig().getScgCfg().getInitialReputation());
+	  	  java.util.List<GamePlayer> gamePlayers = getGamePlayers(remotePlayerProxies);
+	  	  tournament = new Tournament(tournamentId, getConfig(), gamePlayers);
+	  	  // to do Have To supply history
+	  	  tournamentThread = new Thread(tournament);
+	  	  tournamentThread.start();
+          
+          return true;
+        }
+        return false;
+        // If the tournament is running but the thread has died, set the status to COMPLETE.
+      case RUNNING:
+    	  if (tournamentThread != null && !tournamentThread.isAlive()){
+    		  setStatus(Status.COMPLETE);
+    		  for (PlayerStatus ps : tournament.getTournamentStatus().getRegisteredPlayers()){
+    			  finalTournamentScores.put(ps.getName(), ps.getScore());
+    		  }
+    		  return true;
+    	  }
+    	  return false;
+      case STOP_REQUESTED:
+      case COMPLETE:
+        return false;
+      default:
+        return false;
+    }
+  }
+  
+  private List<RemotePlayerProxy> wrapPlayerSpecs(Hashtable<String, PlayerSpec> registeredPlayers, final long maxResp, final double initialReputation){
+      List<PlayerSpec> playerSpecs = List.<PlayerSpec>create();
+  	for(Iterator<String> it = registeredPlayers.keySet().iterator(); it.hasNext();) {
+	    	playerSpecs = playerSpecs.append(registeredPlayers.get(it.next()));
+      }
+      return playerSpecs.map(new List.Map<PlayerSpec, RemotePlayerProxy>() {       	
+          @Override
+          public RemotePlayerProxy map(PlayerSpec spec){
+              return new RemotePlayerProxy(spec, maxResp, initialReputation);
+          }
+      });
+  }
+  
+  private static java.util.List<GamePlayer> getGamePlayers(List<RemotePlayerProxy> proxies) {
+		java.util.List<GamePlayer> gamePlayersL = new ArrayList<GamePlayer>();
+		int playerId = 100;
+  	for(RemotePlayerProxy remoteProxy : proxies){
+  		GamePlayer player = new GamePlayer(playerId, remoteProxy, remoteProxy.getReputation());
+  		playerId++;
+  		gamePlayersL.add(player);
+  	}
+		return gamePlayersL;
+	}
+}

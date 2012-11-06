@@ -1,0 +1,12 @@
+nogen include "../scg/scg.cd";
+
+package mmg;
+
+import scg.*;
+
+MMGInstance = <x> double implements InstanceI.
+MMGSolution = <y> double implements SolutionI.
+MMGInstanceSet = implements InstanceSetI.
+MMGDomain = implements DomainI.
+MMGConfig = "mmg_config["
+            "]" implements DomainConfigI.

@@ -1,0 +1,61 @@
+
+MMGAvatar {{
+
+	private Config config;
+	
+	/* Constructor to be called during registration where you supply config*/
+	public MMGAvatar(Config cfg){
+		config = cfg;
+	}
+	
+		
+	@Override
+	/** Random oppose method - randomly agrees, refutes or strengthens */
+	public List<OpposeAction> oppose(List<Claim> claimsToBeOpposed){
+		return claimsToBeOpposed.map(new List.Map<Claim, OpposeAction>() {
+			public OpposeAction map(Claim claim){
+				Random rand = new Random();
+				int randOppose = rand.nextInt(3);
+				if(randOppose == 0) {
+					return new Agreement();
+				}else if(randOppose == 1){
+					double q = claim.getQuality();
+					SCGConfig scgCFG = config.getScgCfg();
+					double minStrengthening = scgCFG.getMinStrengthening();
+					return new Strengthening(ForAllExistsEqual.getInstance().getStrengthenedClaimQuality(q, minStrengthening));
+				}else{ 
+					return new Refuting();
+				}
+            }
+		});
+	}
+    
+	@Override
+	public List<Claim> propose(List<Claim> forbiddenClaims) {
+		List<Claim> claims = List.create();
+		for(int i=0;i<config.getScgCfg().getMaxProposals();i++){
+			Claim claim = generateRandomClaim();
+			while(forbiddenClaims.contains(claim) || claims.contains(claim)){
+				claim = generateRandomClaim();
+			}
+			claims = claims.append(claim);
+		}
+		return claims;
+	}
+	
+	private Claim generateRandomClaim() {
+		Random r = new Random();
+		return new Claim(MMGInstanceSet.getInstance(),ForAllExistsEqual.getInstance(),0.61,1);
+	}
+
+	@Override
+	public InstanceI provide(Claim claimToBeProvided) {
+		Random r = new Random();
+		return new MMGInstance(r.nextDouble());
+	}
+	@Override
+	public SolutionI solve(SolveRequest solveRequest) {
+		Random r = new Random();
+		return new MMGSolution(r.nextDouble());
+	}
+}}

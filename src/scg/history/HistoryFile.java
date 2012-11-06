@@ -1,0 +1,84 @@
+package scg.history;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
+import java.io.Writer;
+import java.util.Date;
+
+import scg.Util;
+import scg.game.GamePlayer;
+import scg.net.PlayerSpec;
+import edu.neu.ccs.demeterf.lib.Entry;
+
+/**  */
+public class HistoryFile implements Serializable {
+
+	/** History file location */
+	private final String historyFile;
+	/** Write for history */
+	protected final Writer history;
+	/** To check if the head is printed */
+	private boolean headerPrinted = false;
+
+	/**  */
+	public HistoryFile(String prefix, Date compTime, String suffix)
+			throws Exception {
+		this.historyFile = prefix + Util.getFileNameSafeDate(compTime) + suffix;
+		File f = new File(historyFile);
+		if (!f.exists()) {
+			f.createNewFile();
+		}
+		this.history = new OutputStreamWriter(new FileOutputStream(f));
+	}
+
+	public void header(java.util.List<GamePlayer> players) throws IOException {
+		if (headerPrinted) {
+			throw new RuntimeException("Header can be printed only once");
+		}
+		for (GamePlayer player : players) {
+			history.append("Id : " + player.getId() + " : Account : "
+					+ player.getAccount());
+			history.append("\n\n");
+			history.flush();
+		}
+		headerPrinted = true;
+	}
+
+	/**
+	 * To record the event in history file takes the play ID and event to
+	 * recorded as string
+	 */
+	public void recordPlayerEvent(int playerID, String event) throws IOException {
+		history.append("\n");
+		history.append("" + playerID + " :");
+		history.append(event);
+	}
+	
+	public void recordEvent(String event) throws IOException {
+		history.append("\n");
+		history.append(event);
+	}
+
+	/** To print the result of the Game */
+	public void footer(java.util.List<GamePlayer> players) throws IOException {
+		history.append("\n**** Final Results *****");
+		for (GamePlayer player : players) {
+			history.append("\n");
+			history.append("Id : " + player.getId() + " : Account : "
+					+ player.getAccount());
+		}
+	}
+
+	public void flush() throws IOException{
+        history.flush();
+    }
+	
+	/** To close the history file writer */
+	public void close() throws IOException {
+		history.flush();
+		history.close();
+	}
+}

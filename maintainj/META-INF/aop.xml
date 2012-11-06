@@ -1,0 +1,17 @@
+<aspectj>
+	<aspects>
+		<concrete-aspect name="com.maintainj.inst.J2SEAspect" extends="com.maintainj.aspect.J2SEExecutionAspect">
+			<pointcut name="anyExecution" expression="execution( * *.*(..)) || execution( *.new(..))"/>
+			<pointcut name="beforeMain" expression="execution(public static void scg.admin.Admin.main(String[]))"/>
+		</concrete-aspect>
+	</aspects>
+	<weaver options="-proceedOnError -nowarn -XaddSerialVersionUID">
+		<include within="mmg..*"/>
+		<include within="persistentPG..*"/>
+		<include within="response..*"/>
+		<include within="scg..*"/>
+		<include within="history..*"/>
+		<include within="scg.admin.Admin"/>
+		<exclude within="com.maintainj..*"/>
+	</weaver>
+</aspectj>

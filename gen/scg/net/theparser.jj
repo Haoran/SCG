@@ -1,0 +1,341 @@
+
+// ** This file was generated with DemFGen (vers:4/15/2011)
+
+options{ STATIC = false;  }
+PARSER_BEGIN(TheParser)
+package scg.net;
+
+import edu.neu.ccs.demeterf.lib.*;
+import edu.neu.ccs.demeterf.lib.*;
+import java.io.*;
+import edu.neu.ccs.demeterf.lib.*;
+import edu.neu.ccs.demeterf.Fields;
+import edu.neu.ccs.demeterf.lib.ident;
+import edu.neu.ccs.demeterf.lib.verbatim;
+
+  public class TheParser{
+
+   public static String unescape(String str){
+      String retval = "";
+      int index = 0;
+      char ch, ch1;
+      int ordinal = 0;
+      while (index < str.length()) {
+         if(str.charAt(index) != '\\') { retval += str.charAt(index++); continue; }
+         ch = str.charAt(++index);
+         if(ch == 'b') { retval += '\b'; index++; continue; }
+         if(ch == 't') { retval += '\t'; index++; continue; }
+         if(ch == 'n') { retval += '\n'; index++; continue; }
+         if(ch == 'f') { retval += '\f'; index++; continue; }
+         if(ch == 'r') { retval += '\r'; index++; continue; }
+         if(ch == '"') { retval += '\"'; index++; continue; }
+         if(ch == '\'') { retval += '\''; index++; continue; }
+         if(ch == '\\') { retval += '\\'; index++; continue; }
+         if(ch >= '0' && ch <= '7'){
+            ordinal = ((int)ch) - ((int)'0'); index++;
+            ch1 = str.charAt(index);
+            if(ch1 >= '0' && ch1 <= '7'){
+               ordinal = ordinal*8 + ((int)ch1) - ((int)'0'); index++;
+               ch1 = str.charAt(index);
+               if(ch <= '3' && ch1 >= '0' && ch1 <= '7'){
+                  ordinal = ordinal*8 + ((int)ch1) - ((int)'0'); index++;
+               }
+            }
+            retval += (char)ordinal;
+            continue;
+         }
+         if(ch == 'u'){
+            ordinal = 0;
+            for(int i = 0; i < 4; i++){
+               index++; ch = str.charAt(index);
+               ordinal = ordinal*16+hexval(ch);
+            }
+            index++;
+            retval += (char)ordinal;
+            continue;
+         }
+      }
+      return retval;
+   }
+   static int hexval(char c){
+      int r = "0123456789ABCDEF".indexOf(Character.toUpperCase(c));
+      if(r >= 0)return r;
+      throw new RuntimeException(" ** Bad Escaped Character");
+   }
+  }
+PARSER_END(TheParser)
+
+byte parse_byte():{ int i; }{
+    i = parse_int() { return (byte)i; }
+}
+Byte parse_Byte():{ byte b; }{
+    b = parse_byte() { return b; }
+}
+short parse_short():{ int i; }{
+    i = parse_int() { return (short)i; }
+}
+Short parse_Short():{ short s; }{
+    s = parse_short() { return s; }
+}
+int parse_int():{ Token t; }{
+    t = <INT>
+    { if(t.image.length() > 1 && Character.toLowerCase(t.image.charAt(1)) == 'x')
+          return Integer.parseInt(t.image.substring(2), 16);
+      return Integer.parseInt(t.image); }
+}
+Integer parse_Integer():{ int i; }{
+    i = parse_int() { return i; }
+}
+long parse_long():{ Token t; }{
+    t = <INT>
+    { if(t.image.length() > 1 && Character.toLowerCase(t.image.charAt(1)) == 'x')
+          return Long.parseLong(t.image.substring(2), 16);
+    return Long.parseLong(t.image); }
+}
+Long parse_Long():{ long l; }{
+    l = parse_long() { return l; }
+}
+double parse_double():{ Token t; }{
+    t = <DOUBLE>
+    { return Double.parseDouble(t.image); }
+}
+Double parse_Double():{ double d; }{
+    d = parse_double() { return d; }
+}
+float parse_float():{ Token t; }{
+    t = <DOUBLE>
+    { return Float.parseFloat(t.image); }
+}
+Float parse_Float():{ float f; }{
+    f = parse_float() { return f; }
+}
+String parse_String():{ Token t; }{
+    t = <STRING>
+    { return unescape(t.image.substring(1,t.image.length()-1)); }
+}
+boolean parse_boolean():{ Token t; }{
+    t = <TRUE> { return true; } |
+    t = <FALSE> { return false; }
+}
+Boolean parse_Boolean():{ boolean b; }{
+    b = parse_boolean() { return b; }
+}
+char parse_char():{ Token t; }{
+    t = <CHAR>
+    { return unescape(t.image.substring(1,t.image.length()-1)).charAt(0); }
+}
+Character parse_Character():{ char c; }{
+    c = parse_char() { return c; }
+}
+ident parse_ident():{ Token t; }{
+    t = <IDENT>
+    { return new ident(t.image); }
+}
+verbatim parse_verbatim():{ Token t; }{
+    t = <TEXT>
+    { return new verbatim(t.image.substring(2,t.image.length()-2)); }
+}
+
+public PlayerSpec parse_PlayerSpec():{
+     String name;
+     String address;
+     int port;
+}{
+    "playerspec["
+    name = parse_String()
+    address = parse_String()
+    port = parse_int()
+    "]"
+    { return new PlayerSpec(name,address,port); }
+}
+
+public PlayersFile parse_PlayersFile():{
+     List<PlayerSpec> players;
+}{
+    players = parse_List$PlayerSpec$()
+    <EOF>
+    { return new PlayersFile(players); }
+}
+
+public PasswordEntry parse_PasswordEntry():{
+     String name;
+     String passhash;
+}{
+    "passwd["
+    name = parse_String()
+    passhash = parse_String()
+    "]"
+    { return new PasswordEntry(name,passhash); }
+}
+
+public PasswordFile parse_PasswordFile():{
+     List<PasswordEntry> passwds;
+}{
+    passwds = parse_List$PasswordEntry$()
+    <EOF>
+    { return new PasswordFile(passwds); }
+}
+
+public TeamSpec parse_TeamSpec():{
+     String name;
+     String passhash;
+     List<String> players;
+}{
+    "team["
+    name = parse_String()
+    passhash = parse_String()
+    players = parse_List$String$()
+    "]"
+    { return new TeamSpec(name,passhash,players); }
+}
+
+public TeamFile parse_TeamFile():{
+     List<TeamSpec> teams;
+}{
+    teams = parse_List$TeamSpec$()
+    <EOF>
+    { return new TeamFile(teams); }
+}
+
+
+
+
+
+
+
+
+public RBColor parse_RBColor():{
+    RBColor sup = null;
+}{
+(   sup = parse_RED() { return sup; } | 
+    sup = parse_BLACK() { return sup; } )
+}
+
+public RED parse_RED():{
+}{
+    "red"
+    { return new RED(); }
+}
+
+public BLACK parse_BLACK():{
+}{
+    "black"
+    { return new BLACK(); }
+}
+
+
+
+
+
+
+
+
+
+
+public List<TeamSpec> parse_List$TeamSpec$():{
+    List<TeamSpec> sup = null;
+}{
+(   sup = parse_Cons$TeamSpec$() { return sup; } | 
+    sup = parse_Empty$TeamSpec$() { return sup; } )
+}
+public Empty<TeamSpec> parse_Empty$TeamSpec$():{
+}{
+
+    { return new Empty<TeamSpec>(); }
+}
+public Cons<TeamSpec> parse_Cons$TeamSpec$():{
+     TeamSpec first;
+     List<TeamSpec> rest;
+}{
+    first = parse_TeamSpec()
+    rest = parse_List$TeamSpec$()
+    { return new Cons<TeamSpec>(first,rest); }
+}
+public List<String> parse_List$String$():{
+    List<String> sup = null;
+}{
+(   sup = parse_Cons$String$() { return sup; } | 
+    sup = parse_Empty$String$() { return sup; } )
+}
+public Empty<String> parse_Empty$String$():{
+}{
+
+    { return new Empty<String>(); }
+}
+public Cons<String> parse_Cons$String$():{
+     String first;
+     List<String> rest;
+}{
+    first = parse_String()
+    rest = parse_List$String$()
+    { return new Cons<String>(first,rest); }
+}
+public List<PasswordEntry> parse_List$PasswordEntry$():{
+    List<PasswordEntry> sup = null;
+}{
+(   sup = parse_Cons$PasswordEntry$() { return sup; } | 
+    sup = parse_Empty$PasswordEntry$() { return sup; } )
+}
+public Empty<PasswordEntry> parse_Empty$PasswordEntry$():{
+}{
+
+    { return new Empty<PasswordEntry>(); }
+}
+public Cons<PasswordEntry> parse_Cons$PasswordEntry$():{
+     PasswordEntry first;
+     List<PasswordEntry> rest;
+}{
+    first = parse_PasswordEntry()
+    rest = parse_List$PasswordEntry$()
+    { return new Cons<PasswordEntry>(first,rest); }
+}
+public List<PlayerSpec> parse_List$PlayerSpec$():{
+    List<PlayerSpec> sup = null;
+}{
+(   sup = parse_Cons$PlayerSpec$() { return sup; } | 
+    sup = parse_Empty$PlayerSpec$() { return sup; } )
+}
+public Empty<PlayerSpec> parse_Empty$PlayerSpec$():{
+}{
+
+    { return new Empty<PlayerSpec>(); }
+}
+public Cons<PlayerSpec> parse_Cons$PlayerSpec$():{
+     PlayerSpec first;
+     List<PlayerSpec> rest;
+}{
+    first = parse_PlayerSpec()
+    rest = parse_List$PlayerSpec$()
+    { return new Cons<PlayerSpec>(first,rest); }
+}
+TOKEN: { < INT : ("+" | "-")? ( (["0"-"9"])+ 
+                                  | ("0" ["x","X"]) (["0"-"9","a"-"f","A"-"F"])+ ) >
+       | < DOUBLE : ("-")?(["0"-"9"])+ "." (["0"-"9"])+ (<EXPON>)?
+                            | "." (["0"-"9"])+  (<EXPON>)? >
+       | < #EXPON: ["e","E"] (["+","-"])? (["0"-"9"])+ > }
+SKIP : { " " | "\t" | "\n" | "\r" | "\r\n" }
+SKIP : { < "//" (~["\n","\r"])* ("\n"|"\r\n") >
+       | < "/*" (~["*"])* "*" (~["/"] (~["*"])* "*")* "/" > }
+TOKEN: { < TRUE : "true" >
+       | < FALSE : "false" > }
+TOKEN: { < CHAR: "\'" 
+              ( (~["\'","\\","\n","\r"]) | 
+                ("\\" ( ["n","t","b","r","f","\\","\'","\""] |
+                            ["0"-"7"] ( ["0"-"7"] )? |
+                            ["0"-"3"] ["0"-"7"] ["0"-"7"] ) ) )
+              "\'" >
+       | < STRING :
+              "\""
+              (   (~["\"","\\","\n","\r"])
+                | ("\\"
+                    ( ["n","t","b","r","f","\\","'","\""]
+                    | ["0"-"7"] ( ["0"-"7"] )?
+                    | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+                    )
+                  )
+              )*
+              "\"" >
+       | < TEXT : ( "{{" (~["}"])* ( "}" ~["}"] (~["}"])* )* "}}" ) >
+       | < IDENT : ["a"-"z","A"-"Z","$","_"]
+                   (["a"-"z","A"-"Z","0"-"9","_","$"])* > }
+

@@ -1,0 +1,17 @@
+scg_config[
+domain:hsr.HSRDomain
+protocols: scg.protocol.ForAllExistsMin 
+tournamentStyle: full round-robin 
+turnDuration: 60 //seconds
+maxNumAvatars: 30
+minStrengthening: 0.000000001
+initialReputation: 100.0
+maxReputation: 1000.0
+reputationFactor: 0.4
+minProposals: 2
+maxProposals: 5
+numRounds: 6
+proposedClaimMustBeNew: true 
+minConfidence: 0.5
+]
+hsr.HSRConfig {{ hsr_config[maxN: 1000 ] }}

@@ -1,0 +1,138 @@
+DomainI {{ }}
+
+InstanceI {{
+	boolean valid(SolutionI solution, Config config);
+	double quality(SolutionI solution);	
+}}
+
+SolutionI {{ }}
+
+InstanceSetI {{
+	Option<String> belongsTo(InstanceI instance);
+	Option<String> valid(Config config);
+}}
+
+
+ProtocolI {{
+	double getResult(Claim claim, SolutionI[] solutions, InstanceI[] instances);
+	ProtocolSpec getProtocolSpec();
+	boolean strengthenP(Claim oldClaim, Claim strengthenedClaim);
+	double getStrengthenedClaimQuality(double quality, double minStrengthening);
+	
+}}
+
+Claim {{ 
+	public Claim(InstanceSetI instanceSet, ProtocolI protocol, double quality, double confidence){
+		this(new RWrap(instanceSet), new RWrap(protocol), quality, confidence);
+	}
+	
+	public ProtocolI getProtocol(){
+		return getProtocolWrapper().getWrapee();
+	}
+	
+	public InstanceSetI getInstanceSet(){
+		return getInstanceSetWrapper().getWrapee();	
+	}	
+}}
+
+SolveRequest {{ 
+	public SolveRequest(InstanceI instance, Option<Claim> claim){
+		this(new RWrap(instance), claim);
+	}
+	
+	public InstanceI getInstance(){
+		return getInstanceWrapper().getWrapee();
+	}
+}}
+
+ProvideResponse {{
+	public ProvideResponse(InstanceI instance){
+		this(new RWrap(instance));
+	}
+	
+	public InstanceI getInstance(){
+		return getInstanceWrapper().getWrapee();
+	}
+}}
+
+SolveResponse {{ 
+	public SolveResponse(SolutionI solution){
+		this(new RWrap(solution));
+	}
+	
+	public SolutionI getSolution(){
+		return getSolutionWrapper().getWrapee();
+	}
+}}
+
+Config {{ 
+	public Config(SCGConfig scgConfig, DomainConfigI domainConfig){
+		this(scgConfig, new RWrap(domainConfig));
+	}
+	
+	public DomainConfigI getDomainConfig(){
+		return getDomainConfigWrapper().getWrapee();
+	}
+}}
+
+SCGConfig {{
+	private static SCGConfig DEFAULT_SCG_CONFIG;
+	static{
+			try{
+			DEFAULT_SCG_CONFIG = SCGConfig.parse( 
+				"scg_config[\n" +
+				"domain: hsr.HSRDomain\n" +
+				"protocols: scg.protocol.ForAllExistsMin\n" +
+				"tournamentStyle: full round-robin\n" +
+				"turnDuration: 60 //seconds\n" +
+				"maxNumAvatars: 30\n" +
+				"minStrengthening: 0.000000001\n" +
+				"initialReputation: 100.0\n" +
+				"maxReputation: 1000.0\n" +
+				"reputationFactor: 0.4\n" +
+				"minProposals: 2\n" +
+				"maxProposals: 5\n" +
+				"numRounds: 6\n" +
+				"proposedClaimMustBeNew: true\n" +
+				"minConfidence: 0.5\n" +
+				"]\n"
+			);
+		}catch(Exception ex){
+			ex.printStackTrace();
+		}
+	}
+	public static SCGConfig getDefaultSCGConfig(){
+		return SCGConfig.DEFAULT_SCG_CONFIG;
+	}
+}}
+
+
+Role {{
+	/* Role is an enumeration*/ 
+	public static final int ALICE = 0;
+	public static final int BOB = 1;
+  	int ordingal();
+}}
+
+Alice {{ 
+  	public int ordingal(){
+  		return Role.ALICE;
+  	}
+}}
+
+Bob {{ 
+  	public int ordingal(){
+  		return Role.BOB;
+  	}
+}}
+
+
+/**
+ * @author: Rashmi, Anush
+ */ 
+AvatarI{{
+	public List<Claim> propose(List<Claim> forbiddenClaims);
+	public List<OpposeAction> oppose(List<Claim> claimsToBeOpposed);
+	public InstanceI provide(Claim claimToBeProvided);
+	public SolutionI solve(SolveRequest solveRequest);
+}}

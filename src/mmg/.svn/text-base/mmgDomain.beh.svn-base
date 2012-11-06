@@ -1,0 +1,80 @@
+
+MMGInstance {{ 
+	public double quality(SolutionI solution) {
+		MMGSolution mmgSolution = (MMGSolution) solution;
+		double y = mmgSolution.y;
+		double c =  x*y+(1-x)*(1-y*y);
+		return c;
+	}
+    
+	public boolean valid(SolutionI solution, Config config) {
+		MMGSolution mmgSolution = (MMGSolution) solution;
+		double y = mmgSolution.y;
+		// double c = x*y+(1-x)*(1-y*y);
+		
+		// Is C between 0 and 1
+		// boolean isValidC = c>=0 && c<=1;		
+		boolean isValid =  y>=0 && y<=1;
+		
+		if(isValid)
+			return true;
+		else 
+			return false;
+	}
+
+}}
+
+MMGSolution {{ 
+
+}}
+
+MMGInstanceSet {{ 
+
+	private static MMGInstanceSet instance = new MMGInstanceSet();
+	
+	public static MMGInstanceSet getInstance() {
+		return instance;
+	}
+		
+	public Option<String> belongsTo(InstanceI instance) {
+    	MMGInstance mmgInstance = (MMGInstance) instance;
+		double x = mmgInstance.x;
+		boolean isValid =  x>=0 && x<=1;
+		if(isValid)
+			return Option.none();
+		else 
+			return Option.some("x not in [0,1]");
+	}
+
+	public Option<String> valid(Config config) {
+		return Option.none();
+	}
+
+}}
+
+MMGDomain {{ 
+
+}}
+
+MMGConfig {{ 
+private static MMGConfig DEFAULT_MMG_CONFIG;
+	static{
+			try{
+			DEFAULT_MMG_CONFIG = MMGConfig.parse( 
+				"mmg_config[\n" +
+				"]"
+			);
+		}catch(Exception ex){
+			ex.printStackTrace();
+		}
+	}
+ 
+	public static MMGConfig getDefaultDomainConfig(){
+		return MMGConfig.DEFAULT_MMG_CONFIG;
+	}
+	
+	public static Config getDefaultConfig(){
+		return new Config(SCGConfig.getDefaultSCGConfig(), getDefaultDomainConfig());
+	}
+
+}}
